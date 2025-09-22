@@ -16,3 +16,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 serde_with = { version = "3.3", default-features = false, features = ["macros"] }
 smallvec = { version = "1.10", default-features = false, features = ["serde"] }
+
+[dev-dependencies]
+pretty_assertions = "1.4"
