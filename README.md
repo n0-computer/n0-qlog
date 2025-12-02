@@ -1,3 +1,8 @@
+**`n0-qlog`** is a fork of the [qlog crate from quiche](https://github.com/cloudflare/quiche/tree/master/qlog).
+We will add features we need here and iterate more quickly, and likely upstream our changes later.
+
+---
+
 The qlog crate is an implementation of the qlog [main logging schema],
 [QUIC event definitions], and [HTTP/3 and QPACK event definitions].
 The crate provides a qlog data model that can be used for traces with
