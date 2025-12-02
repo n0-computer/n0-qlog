@@ -24,12 +24,6 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::events::EventData;
-use crate::events::EventImportance;
-use crate::events::EventType;
-use crate::events::Eventable;
-use crate::events::ExData;
-
 /// A helper object specialized for streaming JSON-serialized qlog to a
 /// [`Write`] trait.
 ///
@@ -41,6 +35,7 @@ use crate::events::ExData;
 ///
 /// [`Write`]: https://doc.rust-lang.org/std/io/trait.Write.html
 use super::*;
+use crate::events::{EventData, EventImportance, EventType, Eventable, ExData};
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum StreamerState {
@@ -69,8 +64,12 @@ impl QlogStreamer {
     /// [`Write`]: https://doc.rust-lang.org/std/io/trait.Write.html
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        qlog_version: String, title: Option<String>, description: Option<String>,
-        summary: Option<String>, start_time: std::time::Instant, trace: TraceSeq,
+        qlog_version: String,
+        title: Option<String>,
+        description: Option<String>,
+        summary: Option<String>,
+        start_time: std::time::Instant,
+        trace: TraceSeq,
         log_level: EventImportance,
         writer: Box<dyn std::io::Write + Send + Sync>,
     ) -> Self {
@@ -110,8 +109,7 @@ impl QlogStreamer {
         }
 
         self.writer.as_mut().write_all(b"")?;
-        serde_json::to_writer(self.writer.as_mut(), &self.qlog)
-            .map_err(|_| Error::Done)?;
+        serde_json::to_writer(self.writer.as_mut(), &self.qlog).map_err(|_| Error::Done)?;
         self.writer.as_mut().write_all(b"\n")?;
 
         self.state = StreamerState::Ready;
@@ -123,9 +121,7 @@ impl QlogStreamer {
     ///
     /// After this is called, no more serialization will occur.
     pub fn finish_log(&mut self) -> Result<()> {
-        if self.state == StreamerState::Initial ||
-            self.state == StreamerState::Finished
-        {
+        if self.state == StreamerState::Initial || self.state == StreamerState::Finished {
             return Err(Error::InvalidState);
         }
 
@@ -138,9 +134,7 @@ impl QlogStreamer {
 
     /// Writes a serializable to a JSON-SEQ record using
     /// [std::time::Instant::now()].
-    pub fn add_event_now<E: Serialize + Eventable>(
-        &mut self, event: E,
-    ) -> Result<()> {
+    pub fn add_event_now<E: Serialize + Eventable>(&mut self, event: E) -> Result<()> {
         let now = std::time::Instant::now();
 
         self.add_event_with_instant(event, now)
@@ -148,9 +142,7 @@ impl QlogStreamer {
 
     /// Writes a serializable to a pretty-printed JSON-SEQ record using
     /// [std::time::Instant::now()].
-    pub fn add_event_now_pretty<E: Serialize + Eventable>(
-        &mut self, event: E,
-    ) -> Result<()> {
+    pub fn add_event_now_pretty<E: Serialize + Eventable>(&mut self, event: E) -> Result<()> {
         let now = std::time::Instant::now();
 
         self.add_event_with_instant_pretty(event, now)
@@ -159,7 +151,9 @@ impl QlogStreamer {
     /// Writes a serializable to a JSON-SEQ record using the provided
     /// [std::time::Instant].
     pub fn add_event_with_instant<E: Serialize + Eventable>(
-        &mut self, event: E, now: std::time::Instant,
+        &mut self,
+        event: E,
+        now: std::time::Instant,
     ) -> Result<()> {
         self.event_with_instant(event, now, false)
     }
@@ -167,13 +161,18 @@ impl QlogStreamer {
     /// Writes a serializable to a pretty-printed JSON-SEQ record using the
     /// provided [std::time::Instant].
     pub fn add_event_with_instant_pretty<E: Serialize + Eventable>(
-        &mut self, event: E, now: std::time::Instant,
+        &mut self,
+        event: E,
+        now: std::time::Instant,
     ) -> Result<()> {
         self.event_with_instant(event, now, true)
     }
 
     fn event_with_instant<E: Serialize + Eventable>(
-        &mut self, mut event: E, now: std::time::Instant, pretty: bool,
+        &mut self,
+        mut event: E,
+        now: std::time::Instant,
+        pretty: bool,
     ) -> Result<()> {
         if self.state != StreamerState::Ready {
             return Err(Error::InvalidState);
@@ -207,17 +206,13 @@ impl QlogStreamer {
 
     /// Writes an [Event] based on the provided [EventData] to a pretty-printed
     /// JSON-SEQ record at time [std::time::Instant::now()].
-    pub fn add_event_data_now_pretty(
-        &mut self, event_data: EventData,
-    ) -> Result<()> {
+    pub fn add_event_data_now_pretty(&mut self, event_data: EventData) -> Result<()> {
         self.add_event_data_ex_now_pretty(event_data, Default::default())
     }
 
     /// Writes an [Event] based on the provided [EventData] and [ExData] to a
     /// JSON-SEQ record at time [std::time::Instant::now()].
-    pub fn add_event_data_ex_now(
-        &mut self, event_data: EventData, ex_data: ExData,
-    ) -> Result<()> {
+    pub fn add_event_data_ex_now(&mut self, event_data: EventData, ex_data: ExData) -> Result<()> {
         let now = std::time::Instant::now();
 
         self.add_event_data_ex_with_instant(event_data, ex_data, now)
@@ -226,7 +221,9 @@ impl QlogStreamer {
     /// Writes an [Event] based on the provided [EventData] and [ExData] to a
     /// pretty-printed JSON-SEQ record at time [std::time::Instant::now()].
     pub fn add_event_data_ex_now_pretty(
-        &mut self, event_data: EventData, ex_data: ExData,
+        &mut self,
+        event_data: EventData,
+        ex_data: ExData,
     ) -> Result<()> {
         let now = std::time::Instant::now();
 
@@ -236,7 +233,9 @@ impl QlogStreamer {
     /// Writes an [Event] based on the provided [EventData] and
     /// [std::time::Instant] to a JSON-SEQ record.
     pub fn add_event_data_with_instant(
-        &mut self, event_data: EventData, now: std::time::Instant,
+        &mut self,
+        event_data: EventData,
+        now: std::time::Instant,
     ) -> Result<()> {
         self.add_event_data_ex_with_instant(event_data, Default::default(), now)
     }
@@ -244,19 +243,19 @@ impl QlogStreamer {
     /// Writes an [Event] based on the provided [EventData] and
     /// [std::time::Instant] to a pretty-printed JSON-SEQ record.
     pub fn add_event_data_with_instant_pretty(
-        &mut self, event_data: EventData, now: std::time::Instant,
+        &mut self,
+        event_data: EventData,
+        now: std::time::Instant,
     ) -> Result<()> {
-        self.add_event_data_ex_with_instant_pretty(
-            event_data,
-            Default::default(),
-            now,
-        )
+        self.add_event_data_ex_with_instant_pretty(event_data, Default::default(), now)
     }
 
     /// Writes an [Event] based on the provided [EventData], [ExData], and
     /// [std::time::Instant] to a JSON-SEQ record.
     pub fn add_event_data_ex_with_instant(
-        &mut self, event_data: EventData, ex_data: ExData,
+        &mut self,
+        event_data: EventData,
+        ex_data: ExData,
         now: std::time::Instant,
     ) -> Result<()> {
         self.event_data_ex_with_instant(event_data, ex_data, now, false)
@@ -265,15 +264,20 @@ impl QlogStreamer {
     // Writes an [Event] based on the provided [EventData], [ExData], and
     /// [std::time::Instant] to a pretty-printed JSON-SEQ record.
     pub fn add_event_data_ex_with_instant_pretty(
-        &mut self, event_data: EventData, ex_data: ExData,
+        &mut self,
+        event_data: EventData,
+        ex_data: ExData,
         now: std::time::Instant,
     ) -> Result<()> {
         self.event_data_ex_with_instant(event_data, ex_data, now, true)
     }
 
     fn event_data_ex_with_instant(
-        &mut self, event_data: EventData, ex_data: ExData,
-        now: std::time::Instant, pretty: bool,
+        &mut self,
+        event_data: EventData,
+        ex_data: ExData,
+        now: std::time::Instant,
+        pretty: bool,
     ) -> Result<()> {
         if self.state != StreamerState::Ready {
             return Err(Error::InvalidState);
@@ -301,24 +305,18 @@ impl QlogStreamer {
     }
 
     /// Writes a JSON-SEQ-serialized [Event] using the provided [Event].
-    pub fn add_event<E: Serialize + Eventable>(
-        &mut self, event: E,
-    ) -> Result<()> {
+    pub fn add_event<E: Serialize + Eventable>(&mut self, event: E) -> Result<()> {
         self.write_event(event, false)
     }
 
     /// Writes a pretty-printed JSON-SEQ-serialized [Event] using the provided
     /// [Event].
-    pub fn add_event_pretty<E: Serialize + Eventable>(
-        &mut self, event: E,
-    ) -> Result<()> {
+    pub fn add_event_pretty<E: Serialize + Eventable>(&mut self, event: E) -> Result<()> {
         self.write_event(event, true)
     }
 
     /// Writes a JSON-SEQ-serialized [Event] using the provided [Event].
-    fn write_event<E: Serialize + Eventable>(
-        &mut self, event: E, pretty: bool,
-    ) -> Result<()> {
+    fn write_event<E: Serialize + Eventable>(&mut self, event: E, pretty: bool) -> Result<()> {
         if self.state != StreamerState::Ready {
             return Err(Error::InvalidState);
         }
@@ -329,11 +327,9 @@ impl QlogStreamer {
 
         self.writer.as_mut().write_all(b"")?;
         if pretty {
-            serde_json::to_writer_pretty(self.writer.as_mut(), &event)
-                .map_err(|_| Error::Done)?;
+            serde_json::to_writer_pretty(self.writer.as_mut(), &event).map_err(|_| Error::Done)?;
         } else {
-            serde_json::to_writer(self.writer.as_mut(), &event)
-                .map_err(|_| Error::Done)?;
+            serde_json::to_writer(self.writer.as_mut(), &event).map_err(|_| Error::Done)?;
         }
         self.writer.as_mut().write_all(b"\n")?;
 
@@ -361,14 +357,12 @@ impl Drop for QlogStreamer {
 mod tests {
     use std::collections::BTreeMap;
 
-    use super::*;
-    use crate::events::quic;
-    use crate::events::quic::QuicFrame;
-    use crate::events::RawInfo;
+    use serde_json::json;
     use smallvec::smallvec;
     use testing::*;
 
-    use serde_json::json;
+    use super::*;
+    use crate::events::{quic, quic::QuicFrame, RawInfo};
 
     #[test]
     fn serialization_states() {

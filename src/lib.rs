@@ -413,11 +413,9 @@
 //! [`add_event_data_now()`]: streamer/struct.QlogStreamer.html#method.add_event_data_now
 //! [`finish_log()`]: streamer/struct.QlogStreamer.html#method.finish_log
 
-use crate::events::quic::PacketHeader;
-use crate::events::Event;
+use serde::{Deserialize, Serialize};
 
-use serde::Deserialize;
-use serde::Serialize;
+use crate::events::{quic::PacketHeader, Event};
 
 /// A quiche qlog error.
 #[derive(Debug)]
@@ -492,8 +490,8 @@ pub struct QlogSeq {
 
 #[derive(Clone, Copy)]
 pub enum ImportanceLogLevel {
-    Core  = 0,
-    Base  = 1,
+    Core = 0,
+    Base = 1,
     Extra = 2,
 }
 
@@ -517,8 +515,10 @@ pub struct Trace {
 impl Trace {
     /// Creates a new qlog [Trace]
     pub fn new(
-        vantage_point: VantagePoint, title: Option<String>,
-        description: Option<String>, configuration: Option<Configuration>,
+        vantage_point: VantagePoint,
+        title: Option<String>,
+        description: Option<String>,
+        configuration: Option<Configuration>,
         common_fields: Option<CommonFields>,
     ) -> Self {
         Trace {
@@ -553,8 +553,10 @@ pub struct TraceSeq {
 impl TraceSeq {
     /// Creates a new qlog [TraceSeq]
     pub fn new(
-        vantage_point: VantagePoint, title: Option<String>,
-        description: Option<String>, configuration: Option<Configuration>,
+        vantage_point: VantagePoint,
+        title: Option<String>,
+        description: Option<String>,
+        configuration: Option<Configuration>,
         common_fields: Option<CommonFields>,
     ) -> Self {
         TraceSeq {
@@ -722,13 +724,13 @@ pub mod testing {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::events::quic::PacketSent;
-    use crate::events::quic::PacketType;
-    use crate::events::quic::QuicFrame;
-    use crate::events::EventData;
-    use crate::events::RawInfo;
     use testing::*;
+
+    use super::*;
+    use crate::events::{
+        quic::{PacketSent, PacketType, QuicFrame},
+        EventData, RawInfo,
+    };
 
     #[test]
     fn packet_sent_event_no_frames() {

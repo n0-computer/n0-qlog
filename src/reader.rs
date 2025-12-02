@@ -53,12 +53,10 @@ impl<'a> QlogSeqReader<'a> {
         // "null record" skip it
         Self::read_record(reader.as_mut());
 
-        let header = Self::read_record(reader.as_mut()).ok_or_else(|| {
-            std::io::Error::other("error reading file header bytes")
-        })?;
+        let header = Self::read_record(reader.as_mut())
+            .ok_or_else(|| std::io::Error::other("error reading file header bytes"))?;
 
-        let res: Result<QlogSeq, serde_json::Error> =
-            serde_json::from_slice(&header);
+        let res: Result<QlogSeq, serde_json::Error> = serde_json::from_slice(&header);
         match res {
             Ok(qlog) => Ok(Self { qlog, reader }),
 
@@ -66,9 +64,7 @@ impl<'a> QlogSeqReader<'a> {
         }
     }
 
-    fn read_record(
-        reader: &mut (dyn std::io::BufRead + Send + Sync),
-    ) -> Option<Vec<u8>> {
+    fn read_record(reader: &mut (dyn std::io::BufRead + Send + Sync)) -> Option<Vec<u8>> {
         let mut buf = Vec::<u8>::new();
         let size = reader.read_until(b'', &mut buf).unwrap();
         if size <= 1 {
@@ -89,15 +85,13 @@ impl Iterator for QlogSeqReader<'_> {
         // Attempt to deserialize events but skip them if that fails for any
         // reason, ensuring we always read all bytes in the reader.
         while let Some(bytes) = Self::read_record(&mut self.reader) {
-            let r: serde_json::Result<crate::events::Event> =
-                serde_json::from_slice(&bytes);
+            let r: serde_json::Result<crate::events::Event> = serde_json::from_slice(&bytes);
 
             if let Ok(event) = r {
                 return Some(Event::Qlog(event));
             }
 
-            let r: serde_json::Result<crate::events::JsonEvent> =
-                serde_json::from_slice(&bytes);
+            let r: serde_json::Result<crate::events::JsonEvent> = serde_json::from_slice(&bytes);
 
             if let Ok(event) = r {
                 return Some(Event::Json(event));

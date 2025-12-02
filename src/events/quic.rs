@@ -24,18 +24,11 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use serde::Deserialize;
-use serde::Serialize;
-
+use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
-use super::connectivity::TransportOwner;
-use super::Bytes;
-use super::DataRecipient;
-use super::RawInfo;
-use super::Token;
-use crate::HexSlice;
-use crate::StatelessResetToken;
+use super::{connectivity::TransportOwner, Bytes, DataRecipient, RawInfo, Token};
+use crate::{HexSlice, StatelessResetToken};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 #[serde(rename_all = "snake_case")]
@@ -86,9 +79,14 @@ impl PacketHeader {
     #[allow(clippy::too_many_arguments)]
     /// Creates a new PacketHeader.
     pub fn new(
-        packet_type: PacketType, packet_number: Option<u64>, flags: Option<u8>,
-        token: Option<Token>, length: Option<u16>, version: Option<u32>,
-        scid: Option<&[u8]>, dcid: Option<&[u8]>,
+        packet_type: PacketType,
+        packet_number: Option<u64>,
+        flags: Option<u8>,
+        token: Option<Token>,
+        length: Option<u16>,
+        version: Option<u32>,
+        scid: Option<&[u8]>,
+        dcid: Option<&[u8]>,
     ) -> Self {
         let (scil, scid) = match scid {
             Some(cid) => (
@@ -130,31 +128,18 @@ impl PacketHeader {
     /// there are space benefits to not logging them in every packet, especially
     /// PacketType::OneRtt.
     pub fn with_type(
-        ty: PacketType, packet_number: Option<u64>, version: Option<u32>,
-        scid: Option<&[u8]>, dcid: Option<&[u8]>,
+        ty: PacketType,
+        packet_number: Option<u64>,
+        version: Option<u32>,
+        scid: Option<&[u8]>,
+        dcid: Option<&[u8]>,
     ) -> Self {
         match ty {
-            PacketType::OneRtt => PacketHeader::new(
-                ty,
-                packet_number,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            ),
+            PacketType::OneRtt => {
+                PacketHeader::new(ty, packet_number, None, None, None, None, None, None)
+            }
 
-            _ => PacketHeader::new(
-                ty,
-                packet_number,
-                None,
-                None,
-                None,
-                version,
-                scid,
-                dcid,
-            ),
+            _ => PacketHeader::new(ty, packet_number, None, None, None, version, scid, dcid),
         }
     }
 }

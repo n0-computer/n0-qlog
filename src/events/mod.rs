@@ -24,18 +24,15 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use crate::Bytes;
-use crate::Token;
+use std::collections::BTreeMap;
+
+use connectivity::ConnectivityEventType;
 use h3::*;
 use qpack::*;
 use quic::*;
+use serde::{Deserialize, Serialize};
 
-use connectivity::ConnectivityEventType;
-
-use serde::Deserialize;
-use serde::Serialize;
-
-use std::collections::BTreeMap;
+use crate::{Bytes, Token};
 
 pub type ExData = BTreeMap<String, serde_json::Value>;
 
@@ -137,12 +134,12 @@ impl Eventable for Event {
 impl PartialEq for Event {
     // custom comparison to skip over the `ty` field
     fn eq(&self, other: &Event) -> bool {
-        self.time == other.time &&
-            self.data == other.data &&
-            self.ex_data == other.ex_data &&
-            self.protocol_type == other.protocol_type &&
-            self.group_id == other.group_id &&
-            self.time_format == other.time_format
+        self.time == other.time
+            && self.data == other.data
+            && self.ex_data == other.ex_data
+            && self.protocol_type == other.protocol_type
+            && self.group_id == other.group_id
+            && self.time_format == other.time_format
     }
 }
 
@@ -181,12 +178,12 @@ impl EventImportance {
         match (other, self) {
             (EventImportance::Core, EventImportance::Core) => true,
 
-            (EventImportance::Base, EventImportance::Core) |
-            (EventImportance::Base, EventImportance::Base) => true,
+            (EventImportance::Base, EventImportance::Core)
+            | (EventImportance::Base, EventImportance::Base) => true,
 
-            (EventImportance::Extra, EventImportance::Core) |
-            (EventImportance::Extra, EventImportance::Base) |
-            (EventImportance::Extra, EventImportance::Extra) => true,
+            (EventImportance::Extra, EventImportance::Core)
+            | (EventImportance::Extra, EventImportance::Base)
+            | (EventImportance::Extra, EventImportance::Extra) => true,
 
             (..) => false,
         }
@@ -196,111 +193,103 @@ impl EventImportance {
 impl From<EventType> for EventImportance {
     fn from(ty: EventType) -> Self {
         match ty {
-            EventType::ConnectivityEventType(
-                ConnectivityEventType::ServerListening,
-            ) => EventImportance::Extra,
-            EventType::ConnectivityEventType(
-                ConnectivityEventType::ConnectionStarted,
-            ) => EventImportance::Base,
-            EventType::ConnectivityEventType(
-                ConnectivityEventType::ConnectionClosed,
-            ) => EventImportance::Base,
-            EventType::ConnectivityEventType(
-                ConnectivityEventType::ConnectionIdUpdated,
-            ) => EventImportance::Base,
-            EventType::ConnectivityEventType(
-                ConnectivityEventType::SpinBitUpdated,
-            ) => EventImportance::Base,
-            EventType::ConnectivityEventType(
-                ConnectivityEventType::ConnectionStateUpdated,
-            ) => EventImportance::Base,
-            EventType::ConnectivityEventType(
-                ConnectivityEventType::MtuUpdated,
-            ) => EventImportance::Extra,
+            EventType::ConnectivityEventType(ConnectivityEventType::ServerListening) => {
+                EventImportance::Extra
+            }
+            EventType::ConnectivityEventType(ConnectivityEventType::ConnectionStarted) => {
+                EventImportance::Base
+            }
+            EventType::ConnectivityEventType(ConnectivityEventType::ConnectionClosed) => {
+                EventImportance::Base
+            }
+            EventType::ConnectivityEventType(ConnectivityEventType::ConnectionIdUpdated) => {
+                EventImportance::Base
+            }
+            EventType::ConnectivityEventType(ConnectivityEventType::SpinBitUpdated) => {
+                EventImportance::Base
+            }
+            EventType::ConnectivityEventType(ConnectivityEventType::ConnectionStateUpdated) => {
+                EventImportance::Base
+            }
+            EventType::ConnectivityEventType(ConnectivityEventType::MtuUpdated) => {
+                EventImportance::Extra
+            }
 
-            EventType::SecurityEventType(SecurityEventType::KeyUpdated) =>
-                EventImportance::Base,
-            EventType::SecurityEventType(SecurityEventType::KeyDiscarded) =>
-                EventImportance::Base,
+            EventType::SecurityEventType(SecurityEventType::KeyUpdated) => EventImportance::Base,
+            EventType::SecurityEventType(SecurityEventType::KeyDiscarded) => EventImportance::Base,
 
-            EventType::TransportEventType(
-                TransportEventType::VersionInformation,
-            ) => EventImportance::Core,
-            EventType::TransportEventType(
-                TransportEventType::AlpnInformation,
-            ) => EventImportance::Core,
-            EventType::TransportEventType(TransportEventType::ParametersSet) =>
-                EventImportance::Core,
-            EventType::TransportEventType(
-                TransportEventType::ParametersRestored,
-            ) => EventImportance::Base,
-            EventType::TransportEventType(
-                TransportEventType::DatagramsReceived,
-            ) => EventImportance::Extra,
-            EventType::TransportEventType(TransportEventType::DatagramsSent) =>
-                EventImportance::Extra,
-            EventType::TransportEventType(
-                TransportEventType::DatagramDropped,
-            ) => EventImportance::Extra,
-            EventType::TransportEventType(TransportEventType::PacketReceived) =>
-                EventImportance::Core,
-            EventType::TransportEventType(TransportEventType::PacketSent) =>
-                EventImportance::Core,
-            EventType::TransportEventType(TransportEventType::PacketDropped) =>
-                EventImportance::Base,
-            EventType::TransportEventType(TransportEventType::PacketBuffered) =>
-                EventImportance::Base,
-            EventType::TransportEventType(TransportEventType::PacketsAcked) =>
-                EventImportance::Extra,
-            EventType::TransportEventType(
-                TransportEventType::StreamStateUpdated,
-            ) => EventImportance::Base,
-            EventType::TransportEventType(
-                TransportEventType::FramesProcessed,
-            ) => EventImportance::Extra,
-            EventType::TransportEventType(TransportEventType::DataMoved) =>
-                EventImportance::Base,
+            EventType::TransportEventType(TransportEventType::VersionInformation) => {
+                EventImportance::Core
+            }
+            EventType::TransportEventType(TransportEventType::AlpnInformation) => {
+                EventImportance::Core
+            }
+            EventType::TransportEventType(TransportEventType::ParametersSet) => {
+                EventImportance::Core
+            }
+            EventType::TransportEventType(TransportEventType::ParametersRestored) => {
+                EventImportance::Base
+            }
+            EventType::TransportEventType(TransportEventType::DatagramsReceived) => {
+                EventImportance::Extra
+            }
+            EventType::TransportEventType(TransportEventType::DatagramsSent) => {
+                EventImportance::Extra
+            }
+            EventType::TransportEventType(TransportEventType::DatagramDropped) => {
+                EventImportance::Extra
+            }
+            EventType::TransportEventType(TransportEventType::PacketReceived) => {
+                EventImportance::Core
+            }
+            EventType::TransportEventType(TransportEventType::PacketSent) => EventImportance::Core,
+            EventType::TransportEventType(TransportEventType::PacketDropped) => {
+                EventImportance::Base
+            }
+            EventType::TransportEventType(TransportEventType::PacketBuffered) => {
+                EventImportance::Base
+            }
+            EventType::TransportEventType(TransportEventType::PacketsAcked) => {
+                EventImportance::Extra
+            }
+            EventType::TransportEventType(TransportEventType::StreamStateUpdated) => {
+                EventImportance::Base
+            }
+            EventType::TransportEventType(TransportEventType::FramesProcessed) => {
+                EventImportance::Extra
+            }
+            EventType::TransportEventType(TransportEventType::DataMoved) => EventImportance::Base,
 
-            EventType::RecoveryEventType(RecoveryEventType::ParametersSet) =>
-                EventImportance::Base,
-            EventType::RecoveryEventType(RecoveryEventType::MetricsUpdated) =>
-                EventImportance::Core,
-            EventType::RecoveryEventType(
-                RecoveryEventType::CongestionStateUpdated,
-            ) => EventImportance::Base,
-            EventType::RecoveryEventType(RecoveryEventType::LossTimerUpdated) =>
-                EventImportance::Extra,
-            EventType::RecoveryEventType(RecoveryEventType::PacketLost) =>
-                EventImportance::Core,
-            EventType::RecoveryEventType(
-                RecoveryEventType::MarkedForRetransmit,
-            ) => EventImportance::Extra,
+            EventType::RecoveryEventType(RecoveryEventType::ParametersSet) => EventImportance::Base,
+            EventType::RecoveryEventType(RecoveryEventType::MetricsUpdated) => {
+                EventImportance::Core
+            }
+            EventType::RecoveryEventType(RecoveryEventType::CongestionStateUpdated) => {
+                EventImportance::Base
+            }
+            EventType::RecoveryEventType(RecoveryEventType::LossTimerUpdated) => {
+                EventImportance::Extra
+            }
+            EventType::RecoveryEventType(RecoveryEventType::PacketLost) => EventImportance::Core,
+            EventType::RecoveryEventType(RecoveryEventType::MarkedForRetransmit) => {
+                EventImportance::Extra
+            }
 
-            EventType::Http3EventType(Http3EventType::ParametersSet) =>
-                EventImportance::Base,
-            EventType::Http3EventType(Http3EventType::StreamTypeSet) =>
-                EventImportance::Base,
-            EventType::Http3EventType(Http3EventType::FrameCreated) =>
-                EventImportance::Core,
-            EventType::Http3EventType(Http3EventType::FrameParsed) =>
-                EventImportance::Core,
-            EventType::Http3EventType(Http3EventType::PushResolved) =>
-                EventImportance::Extra,
+            EventType::Http3EventType(Http3EventType::ParametersSet) => EventImportance::Base,
+            EventType::Http3EventType(Http3EventType::StreamTypeSet) => EventImportance::Base,
+            EventType::Http3EventType(Http3EventType::FrameCreated) => EventImportance::Core,
+            EventType::Http3EventType(Http3EventType::FrameParsed) => EventImportance::Core,
+            EventType::Http3EventType(Http3EventType::PushResolved) => EventImportance::Extra,
 
-            EventType::QpackEventType(QpackEventType::StateUpdated) =>
-                EventImportance::Base,
-            EventType::QpackEventType(QpackEventType::StreamStateUpdated) =>
-                EventImportance::Base,
-            EventType::QpackEventType(QpackEventType::DynamicTableUpdated) =>
-                EventImportance::Extra,
-            EventType::QpackEventType(QpackEventType::HeadersEncoded) =>
-                EventImportance::Base,
-            EventType::QpackEventType(QpackEventType::HeadersDecoded) =>
-                EventImportance::Base,
-            EventType::QpackEventType(QpackEventType::InstructionCreated) =>
-                EventImportance::Base,
-            EventType::QpackEventType(QpackEventType::InstructionParsed) =>
-                EventImportance::Base,
+            EventType::QpackEventType(QpackEventType::StateUpdated) => EventImportance::Base,
+            EventType::QpackEventType(QpackEventType::StreamStateUpdated) => EventImportance::Base,
+            EventType::QpackEventType(QpackEventType::DynamicTableUpdated) => {
+                EventImportance::Extra
+            }
+            EventType::QpackEventType(QpackEventType::HeadersEncoded) => EventImportance::Base,
+            EventType::QpackEventType(QpackEventType::HeadersDecoded) => EventImportance::Base,
+            EventType::QpackEventType(QpackEventType::InstructionCreated) => EventImportance::Base,
+            EventType::QpackEventType(QpackEventType::InstructionParsed) => EventImportance::Base,
 
             _ => unimplemented!(),
         }
@@ -370,133 +359,155 @@ impl From<EventType> for EventCategory {
 impl From<&EventData> for EventType {
     fn from(event_data: &EventData) -> Self {
         match event_data {
-            EventData::ServerListening { .. } =>
-                EventType::ConnectivityEventType(
-                    ConnectivityEventType::ServerListening,
-                ),
-            EventData::ConnectionStarted { .. } =>
-                EventType::ConnectivityEventType(
-                    ConnectivityEventType::ConnectionStarted,
-                ),
-            EventData::ConnectionClosed { .. } =>
-                EventType::ConnectivityEventType(
-                    ConnectivityEventType::ConnectionClosed,
-                ),
-            EventData::ConnectionIdUpdated { .. } =>
-                EventType::ConnectivityEventType(
-                    ConnectivityEventType::ConnectionIdUpdated,
-                ),
-            EventData::SpinBitUpdated { .. } => EventType::ConnectivityEventType(
-                ConnectivityEventType::SpinBitUpdated,
-            ),
-            EventData::ConnectionStateUpdated { .. } =>
-                EventType::ConnectivityEventType(
-                    ConnectivityEventType::ConnectionStateUpdated,
-                ),
-            EventData::MtuUpdated { .. } => EventType::ConnectivityEventType(
-                ConnectivityEventType::MtuUpdated,
-            ),
+            EventData::ServerListening { .. } => {
+                EventType::ConnectivityEventType(ConnectivityEventType::ServerListening)
+            }
+            EventData::ConnectionStarted { .. } => {
+                EventType::ConnectivityEventType(ConnectivityEventType::ConnectionStarted)
+            }
+            EventData::ConnectionClosed { .. } => {
+                EventType::ConnectivityEventType(ConnectivityEventType::ConnectionClosed)
+            }
+            EventData::ConnectionIdUpdated { .. } => {
+                EventType::ConnectivityEventType(ConnectivityEventType::ConnectionIdUpdated)
+            }
+            EventData::SpinBitUpdated { .. } => {
+                EventType::ConnectivityEventType(ConnectivityEventType::SpinBitUpdated)
+            }
+            EventData::ConnectionStateUpdated { .. } => {
+                EventType::ConnectivityEventType(ConnectivityEventType::ConnectionStateUpdated)
+            }
+            EventData::MtuUpdated { .. } => {
+                EventType::ConnectivityEventType(ConnectivityEventType::MtuUpdated)
+            }
 
-            EventData::KeyUpdated { .. } =>
-                EventType::SecurityEventType(SecurityEventType::KeyUpdated),
-            EventData::KeyDiscarded { .. } =>
-                EventType::SecurityEventType(SecurityEventType::KeyDiscarded),
+            EventData::KeyUpdated { .. } => {
+                EventType::SecurityEventType(SecurityEventType::KeyUpdated)
+            }
+            EventData::KeyDiscarded { .. } => {
+                EventType::SecurityEventType(SecurityEventType::KeyDiscarded)
+            }
 
-            EventData::VersionInformation { .. } =>
-                EventType::TransportEventType(
-                    TransportEventType::VersionInformation,
-                ),
-            EventData::AlpnInformation { .. } =>
-                EventType::TransportEventType(TransportEventType::AlpnInformation),
-            EventData::TransportParametersSet { .. } =>
-                EventType::TransportEventType(TransportEventType::ParametersSet),
-            EventData::TransportParametersRestored { .. } =>
-                EventType::TransportEventType(
-                    TransportEventType::ParametersRestored,
-                ),
-            EventData::DatagramsReceived { .. } => EventType::TransportEventType(
-                TransportEventType::DatagramsReceived,
-            ),
-            EventData::DatagramsSent { .. } =>
-                EventType::TransportEventType(TransportEventType::DatagramsSent),
-            EventData::DatagramDropped { .. } =>
-                EventType::TransportEventType(TransportEventType::DatagramDropped),
-            EventData::PacketReceived { .. } =>
-                EventType::TransportEventType(TransportEventType::PacketReceived),
-            EventData::PacketSent { .. } =>
-                EventType::TransportEventType(TransportEventType::PacketSent),
-            EventData::PacketDropped { .. } =>
-                EventType::TransportEventType(TransportEventType::PacketDropped),
-            EventData::PacketBuffered { .. } =>
-                EventType::TransportEventType(TransportEventType::PacketBuffered),
-            EventData::PacketsAcked { .. } =>
-                EventType::TransportEventType(TransportEventType::PacketsAcked),
-            EventData::StreamStateUpdated { .. } =>
-                EventType::TransportEventType(
-                    TransportEventType::StreamStateUpdated,
-                ),
-            EventData::FramesProcessed { .. } =>
-                EventType::TransportEventType(TransportEventType::FramesProcessed),
-            EventData::DataMoved { .. } =>
-                EventType::TransportEventType(TransportEventType::DataMoved),
+            EventData::VersionInformation { .. } => {
+                EventType::TransportEventType(TransportEventType::VersionInformation)
+            }
+            EventData::AlpnInformation { .. } => {
+                EventType::TransportEventType(TransportEventType::AlpnInformation)
+            }
+            EventData::TransportParametersSet { .. } => {
+                EventType::TransportEventType(TransportEventType::ParametersSet)
+            }
+            EventData::TransportParametersRestored { .. } => {
+                EventType::TransportEventType(TransportEventType::ParametersRestored)
+            }
+            EventData::DatagramsReceived { .. } => {
+                EventType::TransportEventType(TransportEventType::DatagramsReceived)
+            }
+            EventData::DatagramsSent { .. } => {
+                EventType::TransportEventType(TransportEventType::DatagramsSent)
+            }
+            EventData::DatagramDropped { .. } => {
+                EventType::TransportEventType(TransportEventType::DatagramDropped)
+            }
+            EventData::PacketReceived { .. } => {
+                EventType::TransportEventType(TransportEventType::PacketReceived)
+            }
+            EventData::PacketSent { .. } => {
+                EventType::TransportEventType(TransportEventType::PacketSent)
+            }
+            EventData::PacketDropped { .. } => {
+                EventType::TransportEventType(TransportEventType::PacketDropped)
+            }
+            EventData::PacketBuffered { .. } => {
+                EventType::TransportEventType(TransportEventType::PacketBuffered)
+            }
+            EventData::PacketsAcked { .. } => {
+                EventType::TransportEventType(TransportEventType::PacketsAcked)
+            }
+            EventData::StreamStateUpdated { .. } => {
+                EventType::TransportEventType(TransportEventType::StreamStateUpdated)
+            }
+            EventData::FramesProcessed { .. } => {
+                EventType::TransportEventType(TransportEventType::FramesProcessed)
+            }
+            EventData::DataMoved { .. } => {
+                EventType::TransportEventType(TransportEventType::DataMoved)
+            }
 
-            EventData::RecoveryParametersSet { .. } =>
-                EventType::RecoveryEventType(RecoveryEventType::ParametersSet),
-            EventData::MetricsUpdated { .. } =>
-                EventType::RecoveryEventType(RecoveryEventType::MetricsUpdated),
-            EventData::CongestionStateUpdated { .. } =>
-                EventType::RecoveryEventType(
-                    RecoveryEventType::CongestionStateUpdated,
-                ),
-            EventData::LossTimerUpdated { .. } =>
-                EventType::RecoveryEventType(RecoveryEventType::LossTimerUpdated),
-            EventData::PacketLost { .. } =>
-                EventType::RecoveryEventType(RecoveryEventType::PacketLost),
-            EventData::MarkedForRetransmit { .. } =>
-                EventType::RecoveryEventType(
-                    RecoveryEventType::MarkedForRetransmit,
-                ),
+            EventData::RecoveryParametersSet { .. } => {
+                EventType::RecoveryEventType(RecoveryEventType::ParametersSet)
+            }
+            EventData::MetricsUpdated { .. } => {
+                EventType::RecoveryEventType(RecoveryEventType::MetricsUpdated)
+            }
+            EventData::CongestionStateUpdated { .. } => {
+                EventType::RecoveryEventType(RecoveryEventType::CongestionStateUpdated)
+            }
+            EventData::LossTimerUpdated { .. } => {
+                EventType::RecoveryEventType(RecoveryEventType::LossTimerUpdated)
+            }
+            EventData::PacketLost { .. } => {
+                EventType::RecoveryEventType(RecoveryEventType::PacketLost)
+            }
+            EventData::MarkedForRetransmit { .. } => {
+                EventType::RecoveryEventType(RecoveryEventType::MarkedForRetransmit)
+            }
 
-            EventData::H3ParametersSet { .. } =>
-                EventType::Http3EventType(Http3EventType::ParametersSet),
-            EventData::H3ParametersRestored { .. } =>
-                EventType::Http3EventType(Http3EventType::ParametersRestored),
-            EventData::H3StreamTypeSet { .. } =>
-                EventType::Http3EventType(Http3EventType::StreamTypeSet),
-            EventData::H3FrameCreated { .. } =>
-                EventType::Http3EventType(Http3EventType::FrameCreated),
-            EventData::H3FrameParsed { .. } =>
-                EventType::Http3EventType(Http3EventType::FrameParsed),
-            EventData::H3PushResolved { .. } =>
-                EventType::Http3EventType(Http3EventType::PushResolved),
+            EventData::H3ParametersSet { .. } => {
+                EventType::Http3EventType(Http3EventType::ParametersSet)
+            }
+            EventData::H3ParametersRestored { .. } => {
+                EventType::Http3EventType(Http3EventType::ParametersRestored)
+            }
+            EventData::H3StreamTypeSet { .. } => {
+                EventType::Http3EventType(Http3EventType::StreamTypeSet)
+            }
+            EventData::H3FrameCreated { .. } => {
+                EventType::Http3EventType(Http3EventType::FrameCreated)
+            }
+            EventData::H3FrameParsed { .. } => {
+                EventType::Http3EventType(Http3EventType::FrameParsed)
+            }
+            EventData::H3PushResolved { .. } => {
+                EventType::Http3EventType(Http3EventType::PushResolved)
+            }
 
-            EventData::QpackStateUpdated { .. } =>
-                EventType::QpackEventType(QpackEventType::StateUpdated),
-            EventData::QpackStreamStateUpdated { .. } =>
-                EventType::QpackEventType(QpackEventType::StreamStateUpdated),
-            EventData::QpackDynamicTableUpdated { .. } =>
-                EventType::QpackEventType(QpackEventType::DynamicTableUpdated),
-            EventData::QpackHeadersEncoded { .. } =>
-                EventType::QpackEventType(QpackEventType::HeadersEncoded),
-            EventData::QpackHeadersDecoded { .. } =>
-                EventType::QpackEventType(QpackEventType::HeadersDecoded),
-            EventData::QpackInstructionCreated { .. } =>
-                EventType::QpackEventType(QpackEventType::InstructionCreated),
-            EventData::QpackInstructionParsed { .. } =>
-                EventType::QpackEventType(QpackEventType::InstructionParsed),
+            EventData::QpackStateUpdated { .. } => {
+                EventType::QpackEventType(QpackEventType::StateUpdated)
+            }
+            EventData::QpackStreamStateUpdated { .. } => {
+                EventType::QpackEventType(QpackEventType::StreamStateUpdated)
+            }
+            EventData::QpackDynamicTableUpdated { .. } => {
+                EventType::QpackEventType(QpackEventType::DynamicTableUpdated)
+            }
+            EventData::QpackHeadersEncoded { .. } => {
+                EventType::QpackEventType(QpackEventType::HeadersEncoded)
+            }
+            EventData::QpackHeadersDecoded { .. } => {
+                EventType::QpackEventType(QpackEventType::HeadersDecoded)
+            }
+            EventData::QpackInstructionCreated { .. } => {
+                EventType::QpackEventType(QpackEventType::InstructionCreated)
+            }
+            EventData::QpackInstructionParsed { .. } => {
+                EventType::QpackEventType(QpackEventType::InstructionParsed)
+            }
 
-            EventData::ConnectionError { .. } =>
-                EventType::GenericEventType(GenericEventType::ConnectionError),
-            EventData::ApplicationError { .. } =>
-                EventType::GenericEventType(GenericEventType::ApplicationError),
-            EventData::InternalError { .. } =>
-                EventType::GenericEventType(GenericEventType::InternalError),
-            EventData::InternalWarning { .. } =>
-                EventType::GenericEventType(GenericEventType::InternalError),
-            EventData::Message { .. } =>
-                EventType::GenericEventType(GenericEventType::Message),
-            EventData::Marker { .. } =>
-                EventType::GenericEventType(GenericEventType::Marker),
+            EventData::ConnectionError { .. } => {
+                EventType::GenericEventType(GenericEventType::ConnectionError)
+            }
+            EventData::ApplicationError { .. } => {
+                EventType::GenericEventType(GenericEventType::ApplicationError)
+            }
+            EventData::InternalError { .. } => {
+                EventType::GenericEventType(GenericEventType::InternalError)
+            }
+            EventData::InternalWarning { .. } => {
+                EventType::GenericEventType(GenericEventType::InternalError)
+            }
+            EventData::Message { .. } => EventType::GenericEventType(GenericEventType::Message),
+            EventData::Marker { .. } => EventType::GenericEventType(GenericEventType::Marker),
         }
     }
 }
@@ -703,8 +714,7 @@ impl EventData {
         match self {
             EventData::PacketSent(pkt) => pkt.frames.as_ref().map(|f| f.len()),
 
-            EventData::PacketReceived(pkt) =>
-                pkt.frames.as_ref().map(|f| f.len()),
+            EventData::PacketReceived(pkt) => pkt.frames.as_ref().map(|f| f.len()),
 
             EventData::PacketLost(pkt) => pkt.frames.as_ref().map(|f| f.len()),
 

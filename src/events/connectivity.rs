@@ -24,12 +24,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use super::ApplicationErrorCode;
-use super::Bytes;
-use super::ConnectionErrorCode;
+use super::{ApplicationErrorCode, Bytes, ConnectionErrorCode};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 #[serde(rename_all = "snake_case")]
