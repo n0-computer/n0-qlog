@@ -1,17 +1,17 @@
 [package]
-name = "qlog"
+name = "n0-qlog"
 version = "0.15.2"
 description = "qlog data model for QUIC and HTTP/3"
-repository = { workspace = true }
-authors = ["Lucas Pardue <lucas@lucaspardue.com>"]
-edition = { workspace = true }
-license = { workspace = true }
-keywords = { workspace = true }
-categories = { workspace = true }
+repository = "https://github.com/n0-computer/n0-qlog.git"
+authors = ["n0 team <hello@n0.computer>", "Lucas Pardue <lucas@lucaspardue.com>"]
+edition = "2021"
+license = "BSD-2-Clause"
+keywords = ["quic", "http3", "qlog"]
+categories = ["network-programming"]
 readme = "README.md"
 
 [dependencies]
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true, features = ["preserve_order"] }
-serde_with = { workspace = true, features = ["macros"] }
-smallvec = { workspace = true, features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+serde_with = { version = "3.3", default-features = false, features = ["macros"] }
+smallvec = { version = "1.10", default-features = false, features = ["serde"] }
