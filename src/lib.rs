@@ -66,15 +66,15 @@
 //! ### Creating a Trace
 //!
 //! ```
-//! let mut trace = qlog::Trace::new(
-//!     qlog::VantagePoint {
+//! let mut trace = n0_qlog::Trace::new(
+//!     n0_qlog::VantagePoint {
 //!         name: Some("Example client".to_string()),
-//!         ty: qlog::VantagePointType::Client,
+//!         ty: n0_qlog::VantagePointType::Client,
 //!         flow: None,
 //!     },
 //!     Some("Example qlog trace".to_string()),
 //!     Some("Example qlog trace description".to_string()),
-//!     Some(qlog::Configuration {
+//!     Some(n0_qlog::Configuration {
 //!         time_offset: Some(0.0),
 //!         original_uris: None,
 //!     }),
@@ -84,22 +84,22 @@
 //!
 //! ### Adding events to a Trace
 //!
-//! Qlog [`Event`] objects are added to [`qlog::Trace.events`].
+//! Qlog [`Event`] objects are added to [`n0_qlog::Trace.events`].
 //!
 //! The following example demonstrates how to log a qlog QUIC `packet_sent`
 //! event containing a single Crypto frame. It constructs the necessary elements
 //! of the [`Event`], then appends it to the trace with [`push_event()`].
 //!
 //! ```
-//! # let mut trace = qlog::Trace::new (
-//! #     qlog::VantagePoint {
+//! # let mut trace = n0_qlog::Trace::new (
+//! #     n0_qlog::VantagePoint {
 //! #         name: Some("Example client".to_string()),
-//! #         ty: qlog::VantagePointType::Client,
+//! #         ty: n0_qlog::VantagePointType::Client,
 //! #         flow: None,
 //! #     },
 //! #     Some("Example qlog trace".to_string()),
 //! #     Some("Example qlog trace description".to_string()),
-//! #     Some(qlog::Configuration {
+//! #     Some(n0_qlog::Configuration {
 //! #         time_offset: Some(0.0),
 //! #         original_uris: None,
 //! #     }),
@@ -109,8 +109,8 @@
 //! let scid = [0x7e, 0x37, 0xe4, 0xdc, 0xc6, 0x68, 0x2d, 0xa8];
 //! let dcid = [0x36, 0xce, 0x10, 0x4e, 0xee, 0x50, 0x10, 0x1c];
 //!
-//! let pkt_hdr = qlog::events::quic::PacketHeader::new(
-//!     qlog::events::quic::PacketType::Initial,
+//! let pkt_hdr = n0_qlog::events::quic::PacketHeader::new(
+//!     n0_qlog::events::quic::PacketType::Initial,
 //!     Some(0),          // packet_number
 //!     None,             // flags
 //!     None,             // token
@@ -120,19 +120,19 @@
 //!     Some(&dcid),
 //! );
 //!
-//! let frames = vec![qlog::events::quic::QuicFrame::Crypto {
+//! let frames = vec![n0_qlog::events::quic::QuicFrame::Crypto {
 //!     offset: 0,
 //!     length: 0,
 //! }];
 //!
-//! let raw = qlog::events::RawInfo {
+//! let raw = n0_qlog::events::RawInfo {
 //!     length: Some(1251),
 //!     payload_length: Some(1224),
 //!     data: None,
 //! };
 //!
 //! let event_data =
-//!     qlog::events::EventData::PacketSent(qlog::events::quic::PacketSent {
+//!     n0_qlog::events::EventData::PacketSent(n0_qlog::events::quic::PacketSent {
 //!         header: pkt_hdr,
 //!         frames: Some(frames.into()),
 //!         is_coalesced: None,
@@ -145,7 +145,7 @@
 //!         trigger: None,
 //!     });
 //!
-//! trace.push_event(qlog::events::Event::with_time(0.0, event_data));
+//! trace.push_event(n0_qlog::events::Event::with_time(0.0, event_data));
 //! ```
 //!
 //! ### Serializing
@@ -156,15 +156,15 @@
 //! For example, serializing the trace created above:
 //!
 //! ```
-//! # let mut trace = qlog::Trace::new (
-//! #     qlog::VantagePoint {
+//! # let mut trace = n0_qlog::Trace::new (
+//! #     n0_qlog::VantagePoint {
 //! #         name: Some("Example client".to_string()),
-//! #         ty: qlog::VantagePointType::Client,
+//! #         ty: n0_qlog::VantagePointType::Client,
 //! #         flow: None,
 //! #     },
 //! #     Some("Example qlog trace".to_string()),
 //! #     Some("Example qlog trace description".to_string()),
-//! #     Some(qlog::Configuration {
+//! #     Some(n0_qlog::Configuration {
 //! #         time_offset: Some(0.0),
 //! #         original_uris: None,
 //! #     }),
@@ -232,15 +232,15 @@
 //! ### Creating a TraceSeq
 //!
 //! ```
-//! let mut trace = qlog::TraceSeq::new(
-//!     qlog::VantagePoint {
+//! let mut trace = n0_qlog::TraceSeq::new(
+//!     n0_qlog::VantagePoint {
 //!         name: Some("Example client".to_string()),
-//!         ty: qlog::VantagePointType::Client,
+//!         ty: n0_qlog::VantagePointType::Client,
 //!         flow: None,
 //!     },
 //!     Some("Example qlog trace".to_string()),
 //!     Some("Example qlog trace description".to_string()),
-//!     Some(qlog::Configuration {
+//!     Some(n0_qlog::Configuration {
 //!         time_offset: Some(0.0),
 //!         original_uris: None,
 //!     }),
@@ -258,29 +258,29 @@
 //! using [`start_log()`]:
 //!
 //! ```
-//! # let mut trace = qlog::TraceSeq::new(
-//! #    qlog::VantagePoint {
+//! # let mut trace = n0_qlog::TraceSeq::new(
+//! #    n0_qlog::VantagePoint {
 //! #        name: Some("Example client".to_string()),
-//! #        ty: qlog::VantagePointType::Client,
+//! #        ty: n0_qlog::VantagePointType::Client,
 //! #        flow: None,
 //! #    },
 //! #    Some("Example qlog trace".to_string()),
 //! #    Some("Example qlog trace description".to_string()),
-//! #    Some(qlog::Configuration {
+//! #    Some(n0_qlog::Configuration {
 //! #        time_offset: Some(0.0),
 //! #        original_uris: None,
 //! #    }),
 //! #    None,
 //! # );
 //! # let mut file = std::fs::File::create("foo.sqlog").unwrap();
-//! let mut streamer = qlog::streamer::QlogStreamer::new(
-//!     qlog::QLOG_VERSION.to_string(),
+//! let mut streamer = n0_qlog::streamer::QlogStreamer::new(
+//!     n0_qlog::QLOG_VERSION.to_string(),
 //!     Some("Example qlog".to_string()),
 //!     Some("Example qlog description".to_string()),
 //!     None,
 //!     std::time::Instant::now(),
 //!     trace,
-//!     qlog::events::EventImportance::Base,
+//!     n0_qlog::events::EventImportance::Base,
 //!     Box::new(file),
 //! );
 //!
@@ -295,54 +295,54 @@
 //! [`add_event_data_with_instant()`], or [`add_event_data_now()`] :
 //!
 //! ```
-//! # let mut trace = qlog::TraceSeq::new(
-//! #    qlog::VantagePoint {
+//! # let mut trace = n0_qlog::TraceSeq::new(
+//! #    n0_qlog::VantagePoint {
 //! #        name: Some("Example client".to_string()),
-//! #        ty: qlog::VantagePointType::Client,
+//! #        ty: n0_qlog::VantagePointType::Client,
 //! #        flow: None,
 //! #    },
 //! #    Some("Example qlog trace".to_string()),
 //! #    Some("Example qlog trace description".to_string()),
-//! #    Some(qlog::Configuration {
+//! #    Some(n0_qlog::Configuration {
 //! #        time_offset: Some(0.0),
 //! #        original_uris: None,
 //! #    }),
 //! #    None,
 //! # );
 //! # let mut file = std::fs::File::create("foo.qlog").unwrap();
-//! # let mut streamer = qlog::streamer::QlogStreamer::new(
-//! #     qlog::QLOG_VERSION.to_string(),
+//! # let mut streamer = n0_qlog::streamer::QlogStreamer::new(
+//! #     n0_qlog::QLOG_VERSION.to_string(),
 //! #     Some("Example qlog".to_string()),
 //! #     Some("Example qlog description".to_string()),
 //! #     None,
 //! #     std::time::Instant::now(),
 //! #     trace,
-//! #     qlog::events::EventImportance::Base,
+//! #     n0_qlog::events::EventImportance::Base,
 //! #     Box::new(file),
 //! # );
 //!
 //! let scid = [0x7e, 0x37, 0xe4, 0xdc, 0xc6, 0x68, 0x2d, 0xa8];
 //! let dcid = [0x36, 0xce, 0x10, 0x4e, 0xee, 0x50, 0x10, 0x1c];
 //!
-//! let pkt_hdr = qlog::events::quic::PacketHeader::with_type(
-//!     qlog::events::quic::PacketType::OneRtt,
+//! let pkt_hdr = n0_qlog::events::quic::PacketHeader::with_type(
+//!     n0_qlog::events::quic::PacketType::OneRtt,
 //!     Some(0),
 //!     Some(0x00000001),
 //!     Some(&scid),
 //!     Some(&dcid),
 //! );
 //!
-//! let ping = qlog::events::quic::QuicFrame::Ping {
+//! let ping = n0_qlog::events::quic::QuicFrame::Ping {
 //!     length: None,
 //!     payload_length: None,
 //! };
-//! let padding = qlog::events::quic::QuicFrame::Padding {
+//! let padding = n0_qlog::events::quic::QuicFrame::Padding {
 //!     length: None,
 //!     payload_length: 1234,
 //! };
 //!
 //! let event_data =
-//!     qlog::events::EventData::PacketSent(qlog::events::quic::PacketSent {
+//!     n0_qlog::events::EventData::PacketSent(n0_qlog::events::quic::PacketSent {
 //!         header: pkt_hdr,
 //!         frames: Some(vec![ping, padding].into()),
 //!         is_coalesced: None,
@@ -355,7 +355,7 @@
 //!         trigger: None,
 //!     });
 //!
-//! let event = qlog::events::Event::with_time(0.0, event_data);
+//! let event = n0_qlog::events::Event::with_time(0.0, event_data);
 //!
 //! streamer.add_event(event).ok();
 //! ```
@@ -364,29 +364,29 @@
 //! can be finalized with [`finish_log()`]:
 //!
 //! ```
-//! # let mut trace = qlog::TraceSeq::new(
-//! #    qlog::VantagePoint {
+//! # let mut trace = n0_qlog::TraceSeq::new(
+//! #    n0_qlog::VantagePoint {
 //! #        name: Some("Example client".to_string()),
-//! #        ty: qlog::VantagePointType::Client,
+//! #        ty: n0_qlog::VantagePointType::Client,
 //! #        flow: None,
 //! #    },
 //! #    Some("Example qlog trace".to_string()),
 //! #    Some("Example qlog trace description".to_string()),
-//! #    Some(qlog::Configuration {
+//! #    Some(n0_qlog::Configuration {
 //! #        time_offset: Some(0.0),
 //! #        original_uris: None,
 //! #    }),
 //! #    None,
 //! # );
 //! # let mut file = std::fs::File::create("foo.qlog").unwrap();
-//! # let mut streamer = qlog::streamer::QlogStreamer::new(
-//! #     qlog::QLOG_VERSION.to_string(),
+//! # let mut streamer = n0_qlog::streamer::QlogStreamer::new(
+//! #     n0_qlog::QLOG_VERSION.to_string(),
 //! #     Some("Example qlog".to_string()),
 //! #     Some("Example qlog description".to_string()),
 //! #     None,
 //! #     std::time::Instant::now(),
 //! #     trace,
-//! #     qlog::events::EventImportance::Base,
+//! #     n0_qlog::events::EventImportance::Base,
 //! #     Box::new(file),
 //! # );
 //! streamer.finish_log().ok();
@@ -401,7 +401,7 @@
 //! [`TraceSeq`]: struct.TraceSeq.html
 //! [`VantagePoint`]: struct.VantagePoint.html
 //! [`Configuration`]: struct.Configuration.html
-//! [`qlog::Trace.events`]: struct.Trace.html#structfield.events
+//! [`n0_qlog::Trace.events`]: struct.Trace.html#structfield.events
 //! [`push_event()`]: struct.Trace.html#method.push_event
 //! [`QlogStreamer`]: struct.QlogStreamer.html
 //! [`Write`]: https://doc.rust-lang.org/std/io/trait.Write.html
