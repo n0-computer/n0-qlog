@@ -450,6 +450,7 @@ pub enum QuicFrameTypeName {
     Datagram,
     AckFrequency,
     ImmediateAck,
+    ObservedAddress,
     PathAck,
     PathAbandon,
     PathStatusAvailable,
@@ -616,6 +617,16 @@ pub enum QuicFrame {
         raw: Option<RawInfo>,
     },
 
+    // Extension: QUIC Address Discovery
+    // https://datatracker.ietf.org/doc/draft-ietf-quic-address-discovery/00/
+    ObservedAddress {
+        sequence_number: u64,
+        ip_v4: Option<String>,
+        ip_v6: Option<String>,
+        port: u16,
+        raw: Option<RawInfo>,
+    },
+
     // Extension: QUIC Multipath
     // https://datatracker.ietf.org/doc/draft-ietf-quic-multipath/17/
     PathAck {
@@ -755,6 +766,10 @@ pub struct ParametersSet {
     /// <https://datatracker.ietf.org/doc/draft-ietf-quic-ack-frequency/13/>
     pub min_ack_delay: Option<u64>,
 
+    /// Extension: QUIC Address Discovery
+    /// <https://datatracker.ietf.org/doc/draft-ietf-quic-address-discovery/00/>
+    pub address_discovery: Option<AddressDiscoveryRole>,
+
     /// Extension: QUIC Multipath
     /// <https://datatracker.ietf.org/doc/draft-ietf-quic-multipath/17/>
     pub initial_max_path_id: Option<u64>,
@@ -801,6 +816,19 @@ pub enum Ecn {
     Ect0,
     #[serde(rename = "CE")]
     CE,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum AddressDiscoveryRole {
+    /// Is able to report observer addresses to other peers, but is not
+    /// interested in receiving reports about its own address.
+    SendOnly,
+    /// Is interested on reports about its own observed address, but will not
+    /// report back to other peers.
+    ReceiveOnly,
+    /// Will both report and receive reports of observed addresses.
+    Both,
 }
 
 #[serde_with::skip_serializing_none]
