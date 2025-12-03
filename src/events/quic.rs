@@ -448,6 +448,8 @@ pub enum QuicFrameTypeName {
     ApplicationClose,
     HandshakeDone,
     Datagram,
+    AckFrequency,
+    ImmediateAck,
     PathAck,
     PathAbandon,
     PathStatusAvailable,
@@ -600,6 +602,20 @@ pub enum QuicFrame {
         raw: Option<RawInfo>,
     },
 
+    // Extension: QUIC Acknowledgment Frequency
+    // https://datatracker.ietf.org/doc/draft-ietf-quic-ack-frequency/13/
+    AckFrequency {
+        sequence_number: u64,
+        ack_eliciting_threshold: u64,
+        requested_max_ack_delay: u64,
+        reordering_threshold: u64,
+        raw: Option<RawInfo>,
+    },
+
+    ImmediateAck {
+        raw: Option<RawInfo>,
+    },
+
     // Extension: QUIC Multipath
     // https://datatracker.ietf.org/doc/draft-ietf-quic-multipath/17/
     PathAck {
@@ -734,6 +750,10 @@ pub struct ParametersSet {
     pub initial_max_streams_uni: Option<u64>,
 
     pub preferred_address: Option<PreferredAddress>,
+
+    /// Extension: QUIC Acknowledgment Frequency
+    /// <https://datatracker.ietf.org/doc/draft-ietf-quic-ack-frequency/13/>
+    pub min_ack_delay: Option<u64>,
 
     /// Extension: QUIC Multipath
     /// <https://datatracker.ietf.org/doc/draft-ietf-quic-multipath/17/>
