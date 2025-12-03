@@ -691,6 +691,26 @@ pub enum QuicFrame {
         raw: Option<RawInfo>,
     },
 
+    // Extension: QUIC NAT traversal (iroh version)
+    // no spec yet
+    AddAddress {
+        sequence_number: u64,
+        ip_v4: Option<String>,
+        ip_v6: Option<String>,
+        port: u16,
+    },
+
+    ReachOut {
+        round: u64,
+        ip_v4: Option<String>,
+        ip_v6: Option<String>,
+        port: u16,
+    },
+
+    RemoveAddress {
+        sequence_number: u64,
+    },
+
     Unknown {
         frame_type_bytes: Option<u64>,
         raw: Option<RawInfo>,
@@ -773,6 +793,10 @@ pub struct ParametersSet {
     /// Extension: QUIC Multipath
     /// <https://datatracker.ietf.org/doc/draft-ietf-quic-multipath/17/>
     pub initial_max_path_id: Option<u64>,
+
+    /// Extension: QUIC NAT traversal (iroh version)
+    /// (no spec yet)
+    pub max_remote_nat_traversal_addresses: Option<u64>,
 
     pub unknown_parameters: Vec<UnknownTransportParameter>,
 
