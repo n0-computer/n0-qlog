@@ -24,6 +24,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+use std::borrow::Cow;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -1078,9 +1080,30 @@ pub enum CongestionStateUpdatedTrigger {
     Unknown,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
+#[serde(untagged)]
+pub enum TimerType {
+    /// Timers defined in the qlog-quic spec
+    Qlog(QlogTimerType),
+    /// Other timers defined by an application
+    Custom(Cow<'static, str>),
+}
+
+impl TimerType {
+    pub fn custom(s: &'static str) -> Self {
+        Self::Custom(s.into())
+    }
+}
+
+impl From<QlogTimerType> for TimerType {
+    fn from(value: QlogTimerType) -> Self {
+        Self::Qlog(value)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 #[serde(rename_all = "snake_case")]
-pub enum TimerType {
+pub enum QlogTimerType {
     Ack,
     Pto,
     LossTimeout,
