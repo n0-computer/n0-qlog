@@ -1,6 +1,12 @@
 **`n0-qlog`** is a fork of the [qlog crate from quiche](https://github.com/cloudflare/quiche/tree/master/qlog).
 We will add features we need here and iterate more quickly, and likely upstream our changes later.
 
+Development notes:
+* To match upstream, this crate uses a custom `rustfmt.toml`. While uncommon, we keep this for now to make upstreaming changes
+  easier. Unfortunately, this requires to use rustfmt with nightly. Either configure your editor to use nightly for rustfmt,
+  or run `cargo +nightly fmt` before you commit. If you're using Zed or VsCode, a project config is included in the repo so
+  this should work automatically.
+
 ---
 
 The qlog crate is an implementation of the qlog [main logging schema],
