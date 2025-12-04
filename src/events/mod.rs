@@ -88,6 +88,7 @@ pub struct Event {
     #[serde(flatten)]
     pub ex_data: ExData,
 
+    pub tuple: Option<String>,
     pub protocol_type: Option<String>,
     pub group_id: Option<String>,
 
@@ -110,6 +111,7 @@ impl Event {
             time,
             data,
             ex_data,
+            tuple: Default::default(),
             protocol_type: Default::default(),
             group_id: Default::default(),
             time_format: Default::default(),
