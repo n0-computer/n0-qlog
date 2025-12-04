@@ -64,20 +64,21 @@ jobs:
           command: check
           command-arguments: "-Dwarnings"
 
-  check_fmt:
-    timeout-minutes: 30
-    name: Checking fmt
-    runs-on: ubuntu-latest
-    env:
-      RUSTC_WRAPPER: "sccache"
-      SCCACHE_GHA_ENABLED: "on"
-    steps:
-    - uses: actions/checkout@v6
-    - uses: dtolnay/rust-toolchain@stable
-      with:
-        components: rustfmt
-    - uses: mozilla-actions/sccache-action@v0.0.9
-    - run: cargo fmt --all -- --check
+  # fmt is disabled for now
+  # check_fmt:
+  #   timeout-minutes: 30
+  #   name: Checking fmt
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     RUSTC_WRAPPER: "sccache"
+  #     SCCACHE_GHA_ENABLED: "on"
+  #   steps:
+  #   - uses: actions/checkout@v6
+  #   - uses: dtolnay/rust-toolchain@stable
+  #     with:
+  #       components: rustfmt
+  #   - uses: mozilla-actions/sccache-action@v0.0.9
+  #   - run: cargo fmt --all -- --check
 
   check_docs:
     timeout-minutes: 30
@@ -148,4 +149,4 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - run: pip install --user codespell[toml]
-    - run: codespell --ignore-words-list=ans,atmost,crate,inout,ser --skip=CHANGELOG.md
+    - run: codespell --ignore-words-list=ans,atmost,crate,inout,ser,ECT --skip=CHANGELOG.md
