@@ -131,8 +131,8 @@
 //!     data: None,
 //! };
 //!
-//! let event_data =
-//!     n0_qlog::events::EventData::PacketSent(n0_qlog::events::quic::PacketSent {
+//! let event_data = n0_qlog::events::EventData::PacketSent(
+//!     n0_qlog::events::quic::PacketSent {
 //!         header: pkt_hdr,
 //!         frames: Some(frames.into()),
 //!         is_coalesced: None,
@@ -143,7 +143,8 @@
 //!         datagram_id: None,
 //!         send_at_time: None,
 //!         trigger: None,
-//!     });
+//!     },
+//! );
 //!
 //! trace.push_event(n0_qlog::events::Event::with_time(0.0, event_data));
 //! ```
@@ -341,8 +342,8 @@
 //!     payload_length: 1234,
 //! };
 //!
-//! let event_data =
-//!     n0_qlog::events::EventData::PacketSent(n0_qlog::events::quic::PacketSent {
+//! let event_data = n0_qlog::events::EventData::PacketSent(
+//!     n0_qlog::events::quic::PacketSent {
 //!         header: pkt_hdr,
 //!         frames: Some(vec![ping, padding].into()),
 //!         is_coalesced: None,
@@ -353,7 +354,8 @@
 //!         datagram_id: None,
 //!         send_at_time: None,
 //!         trigger: None,
-//!     });
+//!     },
+//! );
 //!
 //! let event = n0_qlog::events::Event::with_time(0.0, event_data);
 //!
