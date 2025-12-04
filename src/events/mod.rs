@@ -437,7 +437,7 @@ pub struct RawInfo {
 }
 
 #[serde_with::skip_serializing_none]
-#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug, strum::Display)]
 #[serde(tag = "name", content = "data")]
 #[allow(clippy::large_enum_variant)]
 pub enum EventData {
