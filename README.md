@@ -1,13 +1,26 @@
-**`n0-qlog`** is a fork of the [qlog crate from quiche](https://github.com/cloudflare/quiche/tree/master/qlog).
-We will add features we need here and iterate more quickly, and likely upstream our changes later.
+# n0-qlog
 
-Development notes:
+The qlog crate is an implementation of the qlog [main logging schema] and [QUIC event definitions].
+
+**`n0-qlog`** is a fork of the [`qlog` crate from quiche](https://github.com/cloudflare/quiche/tree/master/qlog). The fork exists so that we can iterate faster and add support for QUIC extensions used in [iroh](https://github.com/n0-computer/iroh/). We plan to upstream our changes, if possible.
+
+### Features added
+
+* Support for [qlog draft 13](https://datatracker.ietf.org/doc/draft-ietf-quic-qlog-main-schema/13/) and [qlog-quic draft 12](https://datatracker.ietf.org/doc/draft-ietf-quic-qlog-quic-events/12/)
+* Support for various extensions used by iroh: [multipath](https://datatracker.ietf.org/doc/draft-ietf-quic-multipath/17/), [ack frequency](https://datatracker.ietf.org/doc/html/draft-ietf-quic-ack-frequency), [address discovery](https://www.ietf.org/archive/id/draft-ietf-quic-address-discovery-00.html)
+
+See [CHANGELOG.md](CHANGELOG.md) for a full list of changes from upstream `qlog`.
+
+### Development notes
+
 * To match upstream, this crate uses a custom `rustfmt.toml`. While uncommon, we keep this for now to make upstreaming changes
   easier. Unfortunately, this requires to use rustfmt with nightly. Either configure your editor to use nightly for rustfmt,
   or run `cargo +nightly fmt` before you commit. If you're using Zed or VsCode, a project config is included in the repo so
   this should work automatically.
 
 ---
+
+# qlog
 
 The qlog crate is an implementation of the qlog [main logging schema],
 [QUIC event definitions], and [HTTP/3 and QPACK event definitions].

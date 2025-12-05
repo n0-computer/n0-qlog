@@ -1,6 +1,6 @@
 [package]
 name = "n0-qlog"
-version = "0.15.2"
+version = "0.1.0"
 description = "qlog data model for QUIC and HTTP/3"
 repository = "https://github.com/n0-computer/n0-qlog.git"
 authors = ["n0 team <hello@n0.computer>", "Lucas Pardue <lucas@lucaspardue.com>"]
