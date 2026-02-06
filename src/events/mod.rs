@@ -538,7 +538,7 @@ pub enum EventData {
     RecoveryParametersSet(quic::RecoveryParametersSet),
 
     #[serde(rename = "quic:recovery_metrics_updated")]
-    MetricsUpdated(quic::RecoveryMetricsUpdated),
+    MetricsUpdated(quic::MetricsUpdated),
 
     #[serde(rename = "quic:congestion_state_updated")]
     CongestionStateUpdated(quic::CongestionStateUpdated),

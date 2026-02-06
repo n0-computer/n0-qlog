@@ -31,16 +31,17 @@ use serde::Serialize;
 
 use smallvec::SmallVec;
 
+use super::Bytes;
+use super::DataRecipient;
+use super::ExData;
+use super::RawInfo;
+use super::Token;
 use crate::HexSlice;
 
-use crate::Bytes;
 use crate::StatelessResetToken;
 use crate::events::ApplicationError;
 use crate::events::ConnectionClosedEventError;
 use crate::events::ConnectionClosedFrameError;
-use crate::events::DataRecipient;
-use crate::events::RawInfo;
-use crate::events::Token;
 use crate::events::TupleEndpointInfo;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
@@ -1151,8 +1152,12 @@ pub struct RecoveryParametersSet {
 
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
-pub struct RecoveryMetricsUpdated {
-    pub path_id: Option<u64>,
+pub struct MetricsUpdated {
+    /// Extension data for non-standard fields. `flatten` causes these fields to
+    /// be serialized into the `data` field of a qlog event. On deserialize,
+    /// unknown fields are collected into `ex_data`.
+    #[serde(flatten)]
+    pub ex_data: ExData,
 
     pub min_rtt: Option<f32>,
     pub smoothed_rtt: Option<f32>,
