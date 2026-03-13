@@ -31,17 +31,17 @@ use serde::Serialize;
 
 use smallvec::SmallVec;
 
-use super::Bytes;
-use super::DataRecipient;
 use super::ExData;
-use super::RawInfo;
-use super::Token;
 use crate::HexSlice;
 
+use crate::Bytes;
 use crate::StatelessResetToken;
 use crate::events::ApplicationError;
 use crate::events::ConnectionClosedEventError;
 use crate::events::ConnectionClosedFrameError;
+use crate::events::DataRecipient;
+use crate::events::RawInfo;
+use crate::events::Token;
 use crate::events::TupleEndpointInfo;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
@@ -58,6 +58,7 @@ pub enum PacketType {
 
     Retry,
     VersionNegotiation,
+    StatelessReset,
     #[default]
     Unknown,
 }
@@ -334,10 +335,10 @@ pub struct ConnectionStarted {
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct ConnectionClosed {
-    pub owner: Option<TransportInitiator>,
+    pub initiator: Option<TransportInitiator>,
 
     pub connection_error: Option<ConnectionClosedEventError>,
-    pub application_code: Option<ApplicationError>,
+    pub application_error: Option<ApplicationError>,
     pub error_code: Option<u64>,
     pub internal_code: Option<u64>,
 
@@ -1004,7 +1005,7 @@ pub struct DatagramDataMoved {
 #[serde(rename_all = "snake_case")]
 pub enum BlockedState {
     Blocked,
-    Unidirectionalblocked,
+    Unblocked,
     #[default]
     Unknown,
 }
@@ -1025,26 +1026,26 @@ pub enum BlockedReason {
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 pub struct ConnectionDataBlockedUpdated {
-    old: Option<BlockedState>,
-    new: BlockedState,
-    reason: Option<BlockedReason>,
+    pub old: Option<BlockedState>,
+    pub new: BlockedState,
+    pub reason: Option<BlockedReason>,
 }
 
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 pub struct StreamDataBlockedUpdated {
-    old: Option<BlockedState>,
-    new: BlockedState,
-    stream_id: u64,
-    reason: Option<BlockedReason>,
+    pub old: Option<BlockedState>,
+    pub new: BlockedState,
+    pub stream_id: u64,
+    pub reason: Option<BlockedReason>,
 }
 
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 pub struct DatagramDataBlockedUpdated {
-    old: Option<BlockedState>,
-    new: BlockedState,
-    reason: Option<BlockedReason>,
+    pub old: Option<BlockedState>,
+    pub new: BlockedState,
+    pub reason: Option<BlockedReason>,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
@@ -1152,7 +1153,7 @@ pub struct RecoveryParametersSet {
 
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
-pub struct MetricsUpdated {
+pub struct RecoveryMetricsUpdated {
     /// Extension data for non-standard fields. `flatten` causes these fields to
     /// be serialized into the `data` field of a qlog event. On deserialize,
     /// unknown fields are collected into `ex_data`.
@@ -1285,28 +1286,4 @@ pub struct KeyDiscarded {
     pub key_phase: Option<u64>,
 
     pub trigger: Option<KeyUpdateOrRetiredTrigger>,
-}
-
-#[cfg(test)]
-mod tests {
-
-    use crate::events::quic::PacketType;
-    use crate::testing::*;
-
-    #[test]
-    fn packet_header() {
-        let pkt_hdr = make_pkt_hdr(PacketType::Initial);
-
-        let log_string = r#"{
-  "packet_type": "initial",
-  "packet_number": 0,
-  "version": "1",
-  "scil": 8,
-  "dcil": 8,
-  "scid": "7e37e4dcc6682da8",
-  "dcid": "36ce104eee50101c"
-}"#;
-
-        assert_eq!(serde_json::to_string_pretty(&pkt_hdr).unwrap(), log_string);
-    }
 }

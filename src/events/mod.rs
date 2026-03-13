@@ -36,10 +36,10 @@ use std::collections::BTreeMap;
 
 pub type ExData = BTreeMap<String, serde_json::Value>;
 
-pub const LOGLEVEL_URI: &str = "urn:ietf:params:qlog:events:loglevel-09";
+pub const LOGLEVEL_URI: &str = "urn:ietf:params:qlog:events:loglevel-13";
 
-pub const QUIC_URI: &str = "urn:ietf:params:qlog:events:quic-08";
-pub const HTTP3_URI: &str = "urn:ietf:params:qlog:events:http3-08";
+pub const QUIC_URI: &str = "urn:ietf:params:qlog:events:quic-12";
+pub const HTTP3_URI: &str = "urn:ietf:params:qlog:events:http3-12";
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[serde(untagged)]
@@ -54,11 +54,12 @@ pub enum EventType {
     None,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
+#[serde(rename_all = "snake_case")]
 pub enum TimeFormat {
-    Absolute,
-    Delta,
-    Relative,
+    #[default]
+    RelativeToEpoch,
+    RelativeToPreviousEvent,
 }
 
 #[serde_with::skip_serializing_none]
@@ -303,105 +304,105 @@ pub trait Eventable {
 impl From<&EventData> for EventType {
     fn from(event_data: &EventData) -> Self {
         match event_data {
-            EventData::ServerListening { .. } =>
+            EventData::QuicServerListening { .. } =>
                 EventType::QuicEventType(QuicEventType::ServerListening),
-            EventData::ConnectionStarted { .. } =>
+            EventData::QuicConnectionStarted { .. } =>
                 EventType::QuicEventType(QuicEventType::ConnectionStarted),
-            EventData::ConnectionClosed { .. } =>
+            EventData::QuicConnectionClosed { .. } =>
                 EventType::QuicEventType(QuicEventType::ConnectionClosed),
-            EventData::ConnectionIdUpdated { .. } =>
+            EventData::QuicConnectionIdUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::ConnectionIdUpdated),
-            EventData::SpinBitUpdated { .. } =>
+            EventData::QuicSpinBitUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::SpinBitUpdated),
-            EventData::ConnectionStateUpdated { .. } =>
+            EventData::QuicConnectionStateUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::ConnectionStateUpdated),
-            EventData::TupleAssigned { .. } =>
+            EventData::QuicTupleAssigned { .. } =>
                 EventType::QuicEventType(QuicEventType::TupleAssigned),
-            EventData::MtuUpdated { .. } =>
+            EventData::QuicMtuUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::MtuUpdated),
 
-            EventData::VersionInformation { .. } =>
+            EventData::QuicVersionInformation { .. } =>
                 EventType::QuicEventType(QuicEventType::VersionInformation),
-            EventData::AlpnInformation { .. } =>
+            EventData::QuicAlpnInformation { .. } =>
                 EventType::QuicEventType(QuicEventType::AlpnInformation),
-            EventData::ParametersSet { .. } =>
+            EventData::QuicParametersSet { .. } =>
                 EventType::QuicEventType(QuicEventType::ParametersSet),
-            EventData::ParametersRestored { .. } =>
+            EventData::QuicParametersRestored { .. } =>
                 EventType::QuicEventType(QuicEventType::ParametersRestored),
-            EventData::PacketSent { .. } =>
+            EventData::QuicPacketSent { .. } =>
                 EventType::QuicEventType(QuicEventType::PacketSent),
-            EventData::PacketReceived { .. } =>
+            EventData::QuicPacketReceived { .. } =>
                 EventType::QuicEventType(QuicEventType::PacketReceived),
-            EventData::PacketDropped { .. } =>
+            EventData::QuicPacketDropped { .. } =>
                 EventType::QuicEventType(QuicEventType::PacketDropped),
-            EventData::PacketBuffered { .. } =>
+            EventData::QuicPacketBuffered { .. } =>
                 EventType::QuicEventType(QuicEventType::PacketBuffered),
-            EventData::PacketsAcked { .. } =>
+            EventData::QuicPacketsAcked { .. } =>
                 EventType::QuicEventType(QuicEventType::PacketsAcked),
-            EventData::UdpDatagramsSent { .. } =>
+            EventData::QuicUdpDatagramsSent { .. } =>
                 EventType::QuicEventType(QuicEventType::UdpDatagramsSent),
-            EventData::UdpDatagramsReceived { .. } =>
+            EventData::QuicUdpDatagramsReceived { .. } =>
                 EventType::QuicEventType(QuicEventType::UdpDatagramsReceived),
-            EventData::UdpDatagramDropped { .. } =>
+            EventData::QuicUdpDatagramDropped { .. } =>
                 EventType::QuicEventType(QuicEventType::UdpDatagramDropped),
-            EventData::StreamStateUpdated { .. } =>
+            EventData::QuicStreamStateUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::StreamStateUpdated),
-            EventData::FramesProcessed { .. } =>
+            EventData::QuicFramesProcessed { .. } =>
                 EventType::QuicEventType(QuicEventType::FramesProcessed),
-            EventData::StreamDataMoved { .. } =>
+            EventData::QuicStreamDataMoved { .. } =>
                 EventType::QuicEventType(QuicEventType::StreamDataMoved),
-            EventData::DatagramDataMoved { .. } =>
+            EventData::QuicDatagramDataMoved { .. } =>
                 EventType::QuicEventType(QuicEventType::DatagramDataMoved),
-            EventData::ConnectionDataBlockedUpdated { .. } =>
+            EventData::QuicConnectionDataBlockedUpdated { .. } =>
                 EventType::QuicEventType(
                     QuicEventType::ConnectionDataBlockedUpdated,
                 ),
-            EventData::StreamDataBlockedUpdated { .. } =>
+            EventData::QuicStreamDataBlockedUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::StreamDataBlockedUpdated),
-            EventData::DatagramDataBlockedUpdated { .. } =>
+            EventData::QuicDatagramDataBlockedUpdated { .. } =>
                 EventType::QuicEventType(
                     QuicEventType::DatagramDataBlockedUpdated,
                 ),
-            EventData::MigrationStateUpdated { .. } =>
+            EventData::QuicMigrationStateUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::MigrationStateUpdated),
 
-            EventData::KeyUpdated { .. } =>
+            EventData::QuicKeyUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::KeyUpdated),
-            EventData::KeyDiscarded { .. } =>
+            EventData::QuicKeyDiscarded { .. } =>
                 EventType::QuicEventType(QuicEventType::KeyDiscarded),
 
-            EventData::RecoveryParametersSet { .. } =>
+            EventData::QuicRecoveryParametersSet { .. } =>
                 EventType::QuicEventType(QuicEventType::RecoveryParametersSet),
-            EventData::MetricsUpdated { .. } =>
+            EventData::QuicMetricsUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::RecoveryMetricsUpdated),
-            EventData::CongestionStateUpdated { .. } =>
+            EventData::QuicCongestionStateUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::CongestionStateUpdated),
-            EventData::TimerUpdated { .. } =>
+            EventData::QuicTimerUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::TimerUpdated),
-            EventData::PacketLost { .. } =>
+            EventData::QuicPacketLost { .. } =>
                 EventType::QuicEventType(QuicEventType::PacketLost),
-            EventData::MarkedForRetransmit { .. } =>
+            EventData::QuicMarkedForRetransmit { .. } =>
                 EventType::QuicEventType(QuicEventType::MarkedForRetransmit),
-            EventData::EcnStateUpdated { .. } =>
+            EventData::QuicEcnStateUpdated { .. } =>
                 EventType::QuicEventType(QuicEventType::EcnStateUpdated),
 
-            EventData::H3ParametersSet { .. } =>
+            EventData::Http3ParametersSet { .. } =>
                 EventType::Http3EventType(Http3EventType::ParametersSet),
-            EventData::H3ParametersRestored { .. } =>
+            EventData::Http3ParametersRestored { .. } =>
                 EventType::Http3EventType(Http3EventType::ParametersRestored),
-            EventData::H3StreamTypeSet { .. } =>
+            EventData::Http3StreamTypeSet { .. } =>
                 EventType::Http3EventType(Http3EventType::StreamTypeSet),
-            EventData::H3PriorityUpdated { .. } =>
+            EventData::Http3PriorityUpdated { .. } =>
                 EventType::Http3EventType(Http3EventType::PriorityUpdated),
-            EventData::H3FrameCreated { .. } =>
+            EventData::Http3FrameCreated { .. } =>
                 EventType::Http3EventType(Http3EventType::FrameCreated),
-            EventData::H3FrameParsed { .. } =>
+            EventData::Http3FrameParsed { .. } =>
                 EventType::Http3EventType(Http3EventType::FrameParsed),
-            EventData::H3DatagramCreated { .. } =>
+            EventData::Http3DatagramCreated { .. } =>
                 EventType::Http3EventType(Http3EventType::DatagramCreated),
-            EventData::H3DatagramParsed { .. } =>
+            EventData::Http3DatagramParsed { .. } =>
                 EventType::Http3EventType(Http3EventType::DatagramParsed),
-            EventData::H3PushResolved { .. } =>
+            EventData::Http3PushResolved { .. } =>
                 EventType::Http3EventType(Http3EventType::PushResolved),
 
             EventData::LogLevelError { .. } =>
@@ -445,173 +446,173 @@ pub struct RawInfo {
 pub enum EventData {
     // QUIC
     #[serde(rename = "quic:server_listening")]
-    ServerListening(quic::ServerListening),
+    QuicServerListening(quic::ServerListening),
 
     #[serde(rename = "quic:connection_started")]
-    ConnectionStarted(quic::ConnectionStarted),
+    QuicConnectionStarted(quic::ConnectionStarted),
 
     #[serde(rename = "quic:connection_closed")]
-    ConnectionClosed(quic::ConnectionClosed),
+    QuicConnectionClosed(quic::ConnectionClosed),
 
     #[serde(rename = "quic:connection_id_updated")]
-    ConnectionIdUpdated(quic::ConnectionIdUpdated),
+    QuicConnectionIdUpdated(quic::ConnectionIdUpdated),
 
     #[serde(rename = "quic:spin_bit_updated")]
-    SpinBitUpdated(quic::SpinBitUpdated),
+    QuicSpinBitUpdated(quic::SpinBitUpdated),
 
     #[serde(rename = "quic:connection_state_updated")]
-    ConnectionStateUpdated(quic::ConnectionStateUpdated),
+    QuicConnectionStateUpdated(quic::ConnectionStateUpdated),
 
     #[serde(rename = "quic:tuple_assigned")]
-    TupleAssigned(quic::TupleAssigned),
+    QuicTupleAssigned(quic::TupleAssigned),
 
     #[serde(rename = "quic:mtu_updated")]
-    MtuUpdated(quic::MtuUpdated),
+    QuicMtuUpdated(quic::MtuUpdated),
 
     #[serde(rename = "quic:version_information")]
-    VersionInformation(quic::QuicVersionInformation),
+    QuicVersionInformation(quic::QuicVersionInformation),
 
     #[serde(rename = "quic:alpn_information")]
-    AlpnInformation(quic::AlpnInformation),
+    QuicAlpnInformation(quic::AlpnInformation),
 
     #[serde(rename = "quic:parameters_set")]
-    ParametersSet(quic::ParametersSet),
+    QuicParametersSet(quic::ParametersSet),
 
     #[serde(rename = "quic:parameters_restored")]
-    ParametersRestored(quic::ParametersRestored),
+    QuicParametersRestored(quic::ParametersRestored),
 
     #[serde(rename = "quic:packet_sent")]
-    PacketSent(quic::PacketSent),
+    QuicPacketSent(quic::PacketSent),
 
     #[serde(rename = "quic:packet_received")]
-    PacketReceived(quic::PacketReceived),
+    QuicPacketReceived(quic::PacketReceived),
 
     #[serde(rename = "quic:packet_dropped")]
-    PacketDropped(quic::PacketDropped),
+    QuicPacketDropped(quic::PacketDropped),
 
     #[serde(rename = "quic:packet_buffered")]
-    PacketBuffered(quic::PacketBuffered),
+    QuicPacketBuffered(quic::PacketBuffered),
 
     #[serde(rename = "quic:packets_acked")]
-    PacketsAcked(quic::PacketsAcked),
+    QuicPacketsAcked(quic::PacketsAcked),
 
     #[serde(rename = "quic:datagrams_sent")]
-    UdpDatagramsSent(quic::UdpDatagramsSent),
+    QuicUdpDatagramsSent(quic::UdpDatagramsSent),
 
     #[serde(rename = "quic:datagrams_received")]
-    UdpDatagramsReceived(quic::UdpDatagramsReceived),
+    QuicUdpDatagramsReceived(quic::UdpDatagramsReceived),
 
     #[serde(rename = "quic:datagram_dropped")]
-    UdpDatagramDropped(quic::UdpDatagramDropped),
+    QuicUdpDatagramDropped(quic::UdpDatagramDropped),
 
     #[serde(rename = "quic:stream_state_updated")]
-    StreamStateUpdated(quic::StreamStateUpdated),
+    QuicStreamStateUpdated(quic::StreamStateUpdated),
 
     #[serde(rename = "quic:frames_processed")]
-    FramesProcessed(quic::FramesProcessed),
+    QuicFramesProcessed(quic::FramesProcessed),
 
     #[serde(rename = "quic:stream_data_moved")]
-    StreamDataMoved(quic::StreamDataMoved),
+    QuicStreamDataMoved(quic::StreamDataMoved),
 
     #[serde(rename = "quic:datagram_data_moved")]
-    DatagramDataMoved(quic::DatagramDataMoved),
+    QuicDatagramDataMoved(quic::DatagramDataMoved),
 
     #[serde(rename = "quic:connection_data_blocked_updated")]
-    ConnectionDataBlockedUpdated(quic::ConnectionDataBlockedUpdated),
+    QuicConnectionDataBlockedUpdated(quic::ConnectionDataBlockedUpdated),
 
     #[serde(rename = "quic:stream_data_blocked_updated")]
-    StreamDataBlockedUpdated(quic::StreamDataBlockedUpdated),
+    QuicStreamDataBlockedUpdated(quic::StreamDataBlockedUpdated),
 
     #[serde(rename = "quic:datagram_data_blocked_updated")]
-    DatagramDataBlockedUpdated(quic::DatagramDataBlockedUpdated),
+    QuicDatagramDataBlockedUpdated(quic::DatagramDataBlockedUpdated),
 
     #[serde(rename = "quic:migration_state_updated")]
-    MigrationStateUpdated(quic::MigrationStateUpdated),
+    QuicMigrationStateUpdated(quic::MigrationStateUpdated),
 
     #[serde(rename = "quic:key_updated")]
-    KeyUpdated(quic::KeyUpdated),
+    QuicKeyUpdated(quic::KeyUpdated),
 
     #[serde(rename = "quic:key_retired")]
-    KeyDiscarded(quic::KeyDiscarded),
+    QuicKeyDiscarded(quic::KeyDiscarded),
 
     #[serde(rename = "quic:recovery_parameters_set")]
-    RecoveryParametersSet(quic::RecoveryParametersSet),
+    QuicRecoveryParametersSet(quic::RecoveryParametersSet),
 
     #[serde(rename = "quic:recovery_metrics_updated")]
-    MetricsUpdated(quic::MetricsUpdated),
+    QuicMetricsUpdated(quic::RecoveryMetricsUpdated),
 
     #[serde(rename = "quic:congestion_state_updated")]
-    CongestionStateUpdated(quic::CongestionStateUpdated),
+    QuicCongestionStateUpdated(quic::CongestionStateUpdated),
 
     #[serde(rename = "quic:timer_updated")]
-    TimerUpdated(quic::TimerUpdated),
+    QuicTimerUpdated(quic::TimerUpdated),
 
     #[serde(rename = "quic:packet_lost")]
-    PacketLost(quic::PacketLost),
+    QuicPacketLost(quic::PacketLost),
 
     #[serde(rename = "quic:marked_for_retransmit")]
-    MarkedForRetransmit(quic::MarkedForRetransmit),
+    QuicMarkedForRetransmit(quic::MarkedForRetransmit),
 
     #[serde(rename = "quic:ecn_state_updated")]
-    EcnStateUpdated(quic::EcnStateUpdated),
+    QuicEcnStateUpdated(quic::EcnStateUpdated),
 
     // HTTP/3
     #[serde(rename = "http3:parameters_set")]
-    H3ParametersSet(http3::ParametersSet),
+    Http3ParametersSet(http3::ParametersSet),
 
     #[serde(rename = "http3:parameters_restored")]
-    H3ParametersRestored(http3::ParametersRestored),
+    Http3ParametersRestored(http3::ParametersRestored),
 
     #[serde(rename = "http3:stream_type_set")]
-    H3StreamTypeSet(http3::StreamTypeSet),
+    Http3StreamTypeSet(http3::StreamTypeSet),
 
     #[serde(rename = "http3:priority_updated")]
-    H3PriorityUpdated(http3::PriorityUpdated),
+    Http3PriorityUpdated(http3::PriorityUpdated),
 
     #[serde(rename = "http3:frame_created")]
-    H3FrameCreated(http3::FrameCreated),
+    Http3FrameCreated(http3::FrameCreated),
 
     #[serde(rename = "http3:frame_parsed")]
-    H3FrameParsed(http3::FrameParsed),
+    Http3FrameParsed(http3::FrameParsed),
 
     #[serde(rename = "http3:datagram_created")]
-    H3DatagramCreated(http3::DatagramCreated),
+    Http3DatagramCreated(http3::DatagramCreated),
 
     #[serde(rename = "http3:datagram_parsed")]
-    H3DatagramParsed(http3::DatagramParsed),
+    Http3DatagramParsed(http3::DatagramParsed),
 
     #[serde(rename = "http3:push_resolved")]
-    H3PushResolved(http3::PushResolved),
+    Http3PushResolved(http3::PushResolved),
 
     // LogLevel
     #[serde(rename = "loglevel:error")]
     LogLevelError {
         code: Option<u64>,
-        description: Option<String>,
+        message: Option<String>,
     },
 
     #[serde(rename = "loglevel:warning")]
     LogLevelWarning {
         code: Option<u64>,
-        description: Option<String>,
+        message: Option<String>,
     },
 
     #[serde(rename = "loglevel:info")]
     LogLevelInfo {
         code: Option<u64>,
-        description: Option<String>,
+        message: Option<String>,
     },
 
     #[serde(rename = "loglevel:debug")]
     LogLevelDebug {
         code: Option<u64>,
-        description: Option<String>,
+        message: Option<String>,
     },
 
     #[serde(rename = "loglevel:verbose")]
     LogLevelVerbose {
         code: Option<u64>,
-        description: Option<String>,
+        message: Option<String>,
     },
     //#[serde(untagged)]
     // Unknown(serde_json::Value),
@@ -623,15 +624,17 @@ impl EventData {
         // For some EventData variants, the frame array is optional
         // but for others it is mandatory.
         match self {
-            EventData::PacketSent(pkt) => pkt.frames.as_ref().map(|f| f.len()),
-
-            EventData::PacketReceived(pkt) =>
+            EventData::QuicPacketSent(pkt) =>
                 pkt.frames.as_ref().map(|f| f.len()),
 
-            EventData::PacketLost(pkt) => pkt.frames.as_ref().map(|f| f.len()),
+            EventData::QuicPacketReceived(pkt) =>
+                pkt.frames.as_ref().map(|f| f.len()),
 
-            EventData::MarkedForRetransmit(ev) => Some(ev.frames.len()),
-            EventData::FramesProcessed(ev) => Some(ev.frames.len()),
+            EventData::QuicPacketLost(pkt) =>
+                pkt.frames.as_ref().map(|f| f.len()),
+
+            EventData::QuicMarkedForRetransmit(ev) => Some(ev.frames.len()),
+            EventData::QuicFramesProcessed(ev) => Some(ev.frames.len()),
 
             _ => None,
         }

@@ -68,19 +68,16 @@
 //! ```
 //! # use n0_qlog as qlog;
 //! let mut trace = qlog::Trace::new(
-//!     Some("Example qlog trace".to_string()),
-//!     Some("Example qlog trace description".to_string()),
-//!     None,
-//!     Some(qlog::VantagePoint {
-//!         name: Some("Example client".to_string()),
-//!         ty: qlog::VantagePointType::Client,
-//!         flow: None,
-//!     }),
-//!     vec![
-//!         qlog::events::QUIC_URI.to_string(),
-//!         qlog::events::HTTP3_URI.to_string(),
-//!     ],
-//! );
+//! #    Some("Example qlog trace".to_string()),
+//! #    Some("Example qlog trace description".to_string()),
+//! #    None,
+//! #    Some(qlog::VantagePoint {
+//! #        name: Some("Example client".to_string()),
+//! #        ty: qlog::VantagePointType::Client,
+//! #        flow: None,
+//! #    }),
+//! #    vec![qlog::events::QUIC_URI.to_string(), qlog::events::HTTP3_URI.to_string()],
+//! # );
 //! ```
 //!
 //! ### Adding events to a Trace
@@ -130,7 +127,7 @@
 //! };
 //!
 //! let event_data =
-//!     qlog::events::EventData::PacketSent(qlog::events::quic::PacketSent {
+//!     qlog::events::EventData::QuicPacketSent(qlog::events::quic::PacketSent {
 //!         header: pkt_hdr,
 //!         frames: Some(frames.into()),
 //!         stateless_reset_token: None,
@@ -335,7 +332,7 @@
 //! };
 //!
 //! let event_data =
-//!     qlog::events::EventData::PacketSent(qlog::events::quic::PacketSent {
+//!     qlog::events::EventData::QuicPacketSent(qlog::events::quic::PacketSent {
 //!         header: pkt_hdr,
 //!         frames: Some(vec![ping, padding].into()),
 //!         stateless_reset_token: None,
@@ -583,6 +580,7 @@ pub struct ReferenceTime {
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Debug)]
 pub struct CommonFields {
+    pub tuple: Option<String>,
     pub group_id: Option<String>,
     pub protocol_types: Option<Vec<String>>,
 

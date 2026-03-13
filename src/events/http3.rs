@@ -77,15 +77,20 @@ pub enum Http3EventType {
     PushResolved,
 }
 
+#[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct HttpHeader {
-    pub name: String,
-    pub value: String,
+    pub name: Option<String>,
+    pub name_bytes: Option<String>,
+    pub value: Option<String>,
+    pub value_bytes: Option<String>,
 }
 
+#[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct Setting {
-    pub name: String,
+    pub name: Option<String>,
+    pub name_bytes: Option<u64>,
     pub value: u64,
 }
 
@@ -197,7 +202,7 @@ pub struct ParametersRestored {
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 pub struct StreamTypeSet {
-    pub owner: Option<Initiator>,
+    pub initiator: Option<Initiator>,
     pub stream_id: u64,
     pub stream_type: StreamType,
     pub stream_type_bytes: Option<u64>,
@@ -271,8 +276,8 @@ pub struct DatagramParsed {
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct PushResolved {
-    push_id: Option<u64>,
-    stream_id: Option<u64>,
+    pub push_id: Option<u64>,
+    pub stream_id: Option<u64>,
 
-    decision: Option<PushDecision>,
+    pub decision: PushDecision,
 }

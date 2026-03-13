@@ -394,7 +394,7 @@ mod tests {
             fin: Some(true),
         };
 
-        let event_data1 = EventData::PacketSent(quic::PacketSent {
+        let event_data1 = EventData::QuicPacketSent(quic::PacketSent {
             header: pkt_hdr.clone(),
             frames: Some(smallvec![frame1]),
             raw: raw.clone(),
@@ -425,7 +425,7 @@ mod tests {
             fin: Some(true),
         };
 
-        let event_data2 = EventData::PacketSent(quic::PacketSent {
+        let event_data2 = EventData::QuicPacketSent(quic::PacketSent {
             header: pkt_hdr.clone(),
             frames: Some(smallvec![frame2]),
             raw: raw.clone(),
@@ -434,7 +434,7 @@ mod tests {
 
         let ev2 = Event::with_time(0.0, event_data2);
 
-        let event_data3 = EventData::PacketSent(quic::PacketSent {
+        let event_data3 = EventData::QuicPacketSent(quic::PacketSent {
             header: pkt_hdr,
             frames: Some(smallvec![frame3]),
             stateless_reset_token: Some("reset_token".to_string()),
@@ -557,7 +557,7 @@ mod tests {
             fin: Some(true),
         };
 
-        let event_data1 = EventData::PacketSent(quic::PacketSent {
+        let event_data1 = EventData::QuicPacketSent(quic::PacketSent {
             header: pkt_hdr.clone(),
             frames: Some(smallvec![frame1]),
             raw: raw.clone(),
@@ -582,7 +582,7 @@ mod tests {
             fin: Some(true),
         };
 
-        let event_data2 = EventData::PacketSent(quic::PacketSent {
+        let event_data2 = EventData::QuicPacketSent(quic::PacketSent {
             header: pkt_hdr.clone(),
             frames: Some(smallvec![frame2]),
             raw: raw.clone(),
