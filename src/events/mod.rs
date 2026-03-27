@@ -81,11 +81,10 @@ pub struct Event {
     pub data: EventData,
 
     #[serde(flatten)]
-    pub ex_data: ExData,
+    pub ex_data: Box<ExData>,
 
     pub tuple: Option<String>,
-    pub protocol_type: Option<String>,
-    pub group_id: Option<String>,
+    pub group_id: Option<Box<String>>,
 
     pub time_format: Option<TimeFormat>,
 
@@ -105,9 +104,8 @@ impl Event {
         Event {
             time,
             data,
-            ex_data,
+            ex_data: Box::new(ex_data),
             tuple: Default::default(),
-            protocol_type: Default::default(),
             group_id: Default::default(),
             time_format: Default::default(),
             ty,
@@ -131,7 +129,6 @@ impl PartialEq for Event {
         self.time == other.time &&
             self.data == other.data &&
             self.ex_data == other.ex_data &&
-            self.protocol_type == other.protocol_type &&
             self.group_id == other.group_id &&
             self.time_format == other.time_format
     }
