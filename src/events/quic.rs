@@ -29,8 +29,6 @@ use std::borrow::Cow;
 use serde::Deserialize;
 use serde::Serialize;
 
-use smallvec::SmallVec;
-
 use super::ExData;
 use crate::HexSlice;
 
@@ -75,7 +73,7 @@ pub struct PacketHeader {
     pub packet_number: Option<u64>,
     pub path_id: Option<u64>,
 
-    pub token: Option<Token>,
+    pub token: Option<Box<Token>>,
 
     pub length: Option<u16>,
 
@@ -92,7 +90,7 @@ impl PacketHeader {
     /// Creates a new PacketHeader.
     pub fn new(
         packet_type: PacketType, packet_number: Option<u64>,
-        token: Option<Token>, length: Option<u16>, version: Option<u32>,
+        token: Option<Box<Token>>, length: Option<u16>, version: Option<u32>,
         scid: Option<&[u8]>, dcid: Option<&[u8]>,
     ) -> Self {
         let (scil, scid) = match scid {
@@ -890,7 +888,7 @@ pub struct PacketReceived {
     // `frames` is defined here in the QLog schema specification. However,
     // our streaming serializer requires serde to put the object at the end,
     // so we define it there and depend on serde's preserve_order feature.
-    pub stateless_reset_token: Option<StatelessResetToken>,
+    pub stateless_reset_token: Option<Box<StatelessResetToken>>,
 
     pub supported_versions: Option<Vec<Bytes>>,
 
@@ -909,7 +907,7 @@ pub struct PacketSent {
     // `frames` is defined here in the QLog schema specification. However,
     // our streaming serializer requires serde to put the object at the end,
     // so we define it there and depend on serde's preserve_order feature.
-    pub stateless_reset_token: Option<StatelessResetToken>,
+    pub stateless_reset_token: Option<Box<StatelessResetToken>>,
 
     pub supported_versions: Option<Vec<Bytes>>,
 
@@ -921,7 +919,7 @@ pub struct PacketSent {
 
     pub send_at_time: Option<f64>,
 
-    pub frames: Option<SmallVec<[QuicFrame; 1]>>,
+    pub frames: Option<Vec<QuicFrame>>,
 }
 
 #[serde_with::skip_serializing_none]

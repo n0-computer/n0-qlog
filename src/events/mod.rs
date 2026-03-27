@@ -430,7 +430,7 @@ pub struct RawInfo {
     pub length: Option<u64>,
     pub payload_length: Option<u64>,
 
-    pub data: Option<Bytes>,
+    pub data: Option<Box<Bytes>>,
 }
 
 #[serde_with::skip_serializing_none]
@@ -470,7 +470,7 @@ pub enum EventData {
     QuicAlpnInformation(quic::AlpnInformation),
 
     #[serde(rename = "quic:parameters_set")]
-    QuicParametersSet(quic::ParametersSet),
+    QuicParametersSet(Box<quic::ParametersSet>),
 
     #[serde(rename = "quic:parameters_restored")]
     QuicParametersRestored(quic::ParametersRestored),
