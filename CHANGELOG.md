@@ -2,7 +2,13 @@
 
 All notable changes to iroh will be documented in this file.
 
-## [0.1.0](https://github.com/n0-computer/iroh/compare/tokio-quiche-0.12.0..0.1.0) - 2025-12-05
+## [0.1.1](https://github.com/n0-computer/iroh/compare/v0.1.0..0.1.1) - 2026-05-07
+
+### ⚙️ Miscellaneous Tasks
+
+- Update to edition 2024, bump MSRV to 1.88, update deps ([#15](https://github.com/n0-computer/iroh/issues/15)) - ([842ba84](https://github.com/n0-computer/iroh/commit/842ba847c2eb5f84b6bd0eded8f2d009b3b0c19f))
+
+## [0.1.0](https://github.com/n0-computer/iroh/compare/tokio-quiche-0.12.0..v0.1.0) - 2025-12-05
 
 ### ⛰️  Features
 
@@ -34,6 +40,7 @@ All notable changes to iroh will be documented in this file.
 - Disable fmt, make codespell green - ([cb99240](https://github.com/n0-computer/iroh/commit/cb992405caa7207217f28ab4894dd88489c3f679))
 - Use upstream rustfmt - ([565c16b](https://github.com/n0-computer/iroh/commit/565c16bde3c30779d1d51dfac1a5e9c2d66dac24))
 - Add rustfmt.toml - ([b9e31f6](https://github.com/n0-computer/iroh/commit/b9e31f6e256312a8684eea1fa01fef3216f0cd7d))
+- Prepare 0.1.0 release ([#13](https://github.com/n0-computer/iroh/issues/13)) - ([1db260e](https://github.com/n0-computer/iroh/commit/1db260eff526a727da20ff2f7e7aa8c4fb74caa9))
 
 ## [tokio-quiche-0.12.0](https://github.com/n0-computer/iroh/compare/tokio-quiche-0.9.0..tokio-quiche-0.12.0) - 2025-11-03
 
