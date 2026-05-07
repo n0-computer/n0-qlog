@@ -402,8 +402,8 @@
 //! [`add_event_data_now()`]: streamer/struct.QlogStreamer.html#method.add_event_data_now
 //! [`finish_log()`]: streamer/struct.QlogStreamer.html#method.finish_log
 
-use crate::events::quic::PacketHeader;
 use crate::events::Event;
+use crate::events::quic::PacketHeader;
 
 use serde::Deserialize;
 use serde::Serialize;
@@ -690,11 +690,11 @@ pub mod testing {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::events::EventData;
+    use crate::events::RawInfo;
     use crate::events::quic::PacketSent;
     use crate::events::quic::PacketType;
     use crate::events::quic::QuicFrame;
-    use crate::events::EventData;
-    use crate::events::RawInfo;
     use testing::*;
 
     #[test]

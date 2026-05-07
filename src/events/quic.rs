@@ -33,6 +33,8 @@ use smallvec::SmallVec;
 
 use crate::HexSlice;
 
+use crate::Bytes;
+use crate::StatelessResetToken;
 use crate::events::ApplicationError;
 use crate::events::ConnectionClosedEventError;
 use crate::events::ConnectionClosedFrameError;
@@ -40,8 +42,6 @@ use crate::events::DataRecipient;
 use crate::events::RawInfo;
 use crate::events::Token;
 use crate::events::TupleEndpointInfo;
-use crate::Bytes;
-use crate::StatelessResetToken;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 #[serde(rename_all = "snake_case")]

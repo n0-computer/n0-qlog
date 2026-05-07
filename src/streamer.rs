@@ -361,9 +361,9 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
+    use crate::events::RawInfo;
     use crate::events::quic;
     use crate::events::quic::QuicFrame;
-    use crate::events::RawInfo;
     use smallvec::smallvec;
     use testing::*;
 
