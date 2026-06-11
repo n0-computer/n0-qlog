@@ -1213,6 +1213,7 @@ pub struct RecoveryMetricsUpdated {
     /// unknown fields are collected into `ex_data`.
     #[serde(flatten)]
     pub ex_data: ExData,
+    pub path_id: Option<u64>,
 
     pub min_rtt: Option<f32>,
     pub smoothed_rtt: Option<f32>,
