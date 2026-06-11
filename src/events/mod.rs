@@ -605,8 +605,6 @@ pub enum EventData {
         code: Option<u64>,
         message: Option<String>,
     },
-    //#[serde(untagged)]
-    // Unknown(serde_json::Value),
 }
 
 impl EventData {

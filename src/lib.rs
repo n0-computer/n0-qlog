@@ -404,8 +404,8 @@
 
 use std::time::SystemTime;
 
-use crate::events::quic::PacketHeader;
 use crate::events::Event;
+use crate::events::quic::PacketHeader;
 
 use serde::Deserialize;
 use serde::Serialize;

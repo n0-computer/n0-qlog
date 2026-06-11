@@ -42,18 +42,18 @@ extern crate n0_qlog as qlog;
 use std::path::Path;
 use std::time::Instant;
 
-use qlog::events::quic;
 use qlog::events::EventData;
 use qlog::events::EventImportance;
 use qlog::events::RawInfo;
+use qlog::events::quic;
 use qlog::reader::Event;
 use qlog::reader::QlogSeqReader;
 use qlog::streamer::EventTimePrecision;
 use qlog::streamer::QlogStreamer;
 use qlog::testing;
+use qlog::writer::QlogCompression;
 use qlog::writer::make_qlog_writer_from_path;
 use qlog::writer::qlog_file_name;
-use qlog::writer::QlogCompression;
 
 /// Minimal qlog event used by every round-trip test: a single
 /// `quic:packet_sent`. The specific contents do not matter for this
