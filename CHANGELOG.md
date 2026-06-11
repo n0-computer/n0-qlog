@@ -2,11 +2,18 @@
 
 All notable changes to iroh will be documented in this file.
 
-## [0.1.1](https://github.com/n0-computer/iroh/compare/v0.1.0..0.1.1) - 2026-05-07
+## [0.2.0](https://github.com/n0-computer/iroh/compare/v0.1.1..0.2.0) - 2026-06-11
+
+### ⛰️  Features
+
+- [**breaking**] Merge upstream changes ([#16](https://github.com/n0-computer/iroh/issues/16)) - ([ad86431](https://github.com/n0-computer/iroh/commit/ad864314ec38849b648fe5a1ca913caeaaa24c85))
+
+## [0.1.1](https://github.com/n0-computer/iroh/compare/v0.1.0..v0.1.1) - 2026-05-07
 
 ### ⚙️ Miscellaneous Tasks
 
 - Update to edition 2024, bump MSRV to 1.88, update deps ([#15](https://github.com/n0-computer/iroh/issues/15)) - ([842ba84](https://github.com/n0-computer/iroh/commit/842ba847c2eb5f84b6bd0eded8f2d009b3b0c19f))
+- Prepare 0.1.1 release - ([b280178](https://github.com/n0-computer/iroh/commit/b280178a8cb330edc6f0136f19dbaa008eff7595))
 
 ## [0.1.0](https://github.com/n0-computer/iroh/compare/tokio-quiche-0.12.0..v0.1.0) - 2025-12-05
 

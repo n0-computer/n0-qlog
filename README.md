@@ -6,8 +6,11 @@ The qlog crate is an implementation of the qlog [main logging schema] and [QUIC 
 
 ### Features added
 
-* Support for [qlog draft 13](https://datatracker.ietf.org/doc/draft-ietf-quic-qlog-main-schema/13/) and [qlog-quic draft 12](https://datatracker.ietf.org/doc/draft-ietf-quic-qlog-quic-events/12/)
-* Support for various extensions used by iroh: [multipath](https://datatracker.ietf.org/doc/draft-ietf-quic-multipath/17/), [ack frequency](https://datatracker.ietf.org/doc/html/draft-ietf-quic-ack-frequency), [address discovery](https://www.ietf.org/archive/id/draft-ietf-quic-address-discovery-00.html)
+* Support for various extensions used by iroh: 
+  * [multipath](https://datatracker.ietf.org/doc/draft-ietf-quic-multipath/17/)
+  * [ack frequency](https://datatracker.ietf.org/doc/html/draft-ietf-quic-ack-frequency)
+  * [address discovery](https://www.ietf.org/archive/id/draft-ietf-quic-address-discovery-00.html)
+  * QUIC NAT Traversal (n0 variant)
 
 See [CHANGELOG.md](CHANGELOG.md) for a full list of changes from upstream `qlog`.
 
