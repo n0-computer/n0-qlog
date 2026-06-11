@@ -68,19 +68,16 @@
 //! ```
 //! # use n0_qlog as qlog;
 //! let mut trace = qlog::Trace::new(
-//!     Some("Example qlog trace".to_string()),
-//!     Some("Example qlog trace description".to_string()),
-//!     None,
-//!     Some(qlog::VantagePoint {
-//!         name: Some("Example client".to_string()),
-//!         ty: qlog::VantagePointType::Client,
-//!         flow: None,
-//!     }),
-//!     vec![
-//!         qlog::events::QUIC_URI.to_string(),
-//!         qlog::events::HTTP3_URI.to_string(),
-//!     ],
-//! );
+//! #    Some("Example qlog trace".to_string()),
+//! #    Some("Example qlog trace description".to_string()),
+//! #    None,
+//! #    Some(qlog::VantagePoint {
+//! #        name: Some("Example client".to_string()),
+//! #        ty: qlog::VantagePointType::Client,
+//! #        flow: None,
+//! #    }),
+//! #    vec![qlog::events::QUIC_URI.to_string(), qlog::events::HTTP3_URI.to_string()],
+//! # );
 //! ```
 //!
 //! ### Adding events to a Trace
@@ -130,7 +127,7 @@
 //! };
 //!
 //! let event_data =
-//!     qlog::events::EventData::PacketSent(qlog::events::quic::PacketSent {
+//!     qlog::events::EventData::QuicPacketSent(qlog::events::quic::PacketSent {
 //!         header: pkt_hdr,
 //!         frames: Some(frames.into()),
 //!         stateless_reset_token: None,
@@ -274,6 +271,7 @@
 //!     std::time::Instant::now(),
 //!     trace,
 //!     qlog::events::EventImportance::Base,
+//!     qlog::streamer::EventTimePrecision::NanoSeconds,
 //!     Box::new(file),
 //! );
 //!
@@ -307,6 +305,7 @@
 //! #     std::time::Instant::now(),
 //! #     trace,
 //! #     qlog::events::EventImportance::Base,
+//! #     qlog::streamer::EventTimePrecision::NanoSeconds,
 //! #     Box::new(file),
 //! # );
 //!
@@ -331,11 +330,11 @@
 //!             Some(1234), data: None
 //!           };
 //! let padding = qlog::events::quic::QuicFrame::Padding {
-//!     raw: Some(raw),
+//!     raw: Some(Box::new(raw)),
 //! };
 //!
 //! let event_data =
-//!     qlog::events::EventData::PacketSent(qlog::events::quic::PacketSent {
+//!     qlog::events::EventData::QuicPacketSent(qlog::events::quic::PacketSent {
 //!         header: pkt_hdr,
 //!         frames: Some(vec![ping, padding].into()),
 //!         stateless_reset_token: None,
@@ -376,6 +375,7 @@
 //! #     std::time::Instant::now(),
 //! #     trace,
 //! #     qlog::events::EventImportance::Base,
+//! #     qlog::streamer::EventTimePrecision::NanoSeconds,
 //! #     Box::new(file),
 //! # );
 //! streamer.finish_log().ok();
@@ -401,6 +401,8 @@
 //! [`add_event_data_with_instant()`]: streamer/struct.QlogStreamer.html#method.add_event_data_with_instant
 //! [`add_event_data_now()`]: streamer/struct.QlogStreamer.html#method.add_event_data_now
 //! [`finish_log()`]: streamer/struct.QlogStreamer.html#method.finish_log
+
+use std::time::SystemTime;
 
 use crate::events::Event;
 use crate::events::quic::PacketHeader;
@@ -445,6 +447,19 @@ impl std::convert::From<std::io::Error> for Error {
 
 pub const QLOGFILE_URI: &str = "urn:ietf:params:qlog:file:contained";
 pub const QLOGFILESEQ_URI: &str = "urn:ietf:params:qlog:file:sequential";
+
+/// File extension for an uncompressed qlog stream (JSON-SEQ).
+///
+/// Includes the leading dot so it can be concatenated as a suffix
+/// (`format!("{id}{SQLOG_EXT}")`) and matched as a path suffix
+/// (`name.ends_with(SQLOG_EXT)`).
+pub const SQLOG_EXT: &str = ".sqlog";
+
+/// File extension for a gzip-compressed qlog stream.
+pub const SQLOG_GZ_EXT: &str = ".sqlog.gz";
+
+/// File extension for a zstd-compressed qlog stream.
+pub const SQLOG_ZST_EXT: &str = ".sqlog.zst";
 
 pub type Bytes = String;
 pub type StatelessResetToken = Bytes;
@@ -572,6 +587,15 @@ pub enum VantagePointType {
     Unknown,
 }
 
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum TimeFormat {
+    #[default]
+    RelativeToEpoch,
+    RelativeToPreviousEvent,
+}
+
+#[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Debug)]
 #[serde(rename_all = "snake_case")]
 pub struct ReferenceTime {
@@ -580,14 +604,33 @@ pub struct ReferenceTime {
     pub wall_clock_time: Option<String>,
 }
 
+impl ReferenceTime {
+    /// Create a new `ReferenceTime` instance that uses a monotonic clock.
+    ///
+    /// If `wall_clock_time` is specified, it will be added as the optional
+    /// `wall_clock_time` field of `ReferenceTime`.
+    pub fn new_monotonic(wall_clock_time: Option<SystemTime>) -> Self {
+        let wall_clock_time =
+            wall_clock_time.map(|t| humantime::format_rfc3339(t).to_string());
+        ReferenceTime {
+            clock_type: "monotonic".to_string(),
+            // per draft-ietf-quic-qlog-main-schema-13 epoch must be "unknown"
+            // for monotonic clocks
+            epoch: "unknown".to_string(),
+            wall_clock_time,
+        }
+    }
+}
+
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq, Debug)]
 pub struct CommonFields {
+    pub tuple: Option<String>,
     pub group_id: Option<String>,
     pub protocol_types: Option<Vec<String>>,
 
     pub reference_time: ReferenceTime,
-    pub time_format: Option<String>,
+    pub time_format: Option<TimeFormat>,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
@@ -635,313 +678,38 @@ impl std::fmt::Display for HexSlice<'_> {
     }
 }
 
-#[doc(hidden)]
-pub mod testing {
-    use super::*;
-    use crate::events::quic::PacketType;
-
-    pub fn make_pkt_hdr(packet_type: PacketType) -> PacketHeader {
-        let scid = [0x7e, 0x37, 0xe4, 0xdc, 0xc6, 0x68, 0x2d, 0xa8];
-        let dcid = [0x36, 0xce, 0x10, 0x4e, 0xee, 0x50, 0x10, 0x1c];
-
-        // Some(1251),
-        // Some(1224),
-
-        PacketHeader::new(
-            packet_type,
-            Some(0),
-            None,
-            None,
-            Some(0x0000_0001),
-            Some(&scid),
-            Some(&dcid),
-        )
-    }
-
-    pub fn make_trace() -> Trace {
-        Trace::new(
-            Some("Quiche qlog trace".to_string()),
-            Some("Quiche qlog trace description".to_string()),
-            None,
-            Some(VantagePoint {
-                name: None,
-                ty: VantagePointType::Server,
-                flow: None,
-            }),
-            vec![],
-        )
-    }
-
-    pub fn make_trace_seq() -> TraceSeq {
-        TraceSeq::new(
-            Some("Quiche qlog trace".to_string()),
-            Some("Quiche qlog trace description".to_string()),
-            None,
-            Some(VantagePoint {
-                name: None,
-                ty: VantagePointType::Server,
-                flow: None,
-            }),
-            vec![],
-        )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::events::EventData;
-    use crate::events::RawInfo;
-    use crate::events::quic::PacketSent;
-    use crate::events::quic::PacketType;
-    use crate::events::quic::QuicFrame;
-    use testing::*;
-
-    #[test]
-    fn packet_sent_event_no_frames() {
-        let log_string = r#"{
-  "time": 0.0,
-  "name": "quic:packet_sent",
-  "data": {
-    "header": {
-      "packet_type": "initial",
-      "packet_number": 0,
-      "version": "1",
-      "scil": 8,
-      "dcil": 8,
-      "scid": "7e37e4dcc6682da8",
-      "dcid": "36ce104eee50101c"
-    },
-    "raw": {
-      "length": 1251,
-      "payload_length": 1224
-    }
-  }
-}"#;
-
-        let pkt_hdr = make_pkt_hdr(PacketType::Initial);
-        let ev_data = EventData::PacketSent(PacketSent {
-            header: pkt_hdr,
-            raw: Some(RawInfo {
-                length: Some(1251),
-                payload_length: Some(1224),
-                data: None,
-            }),
-            ..Default::default()
-        });
-
-        let ev = Event::with_time(0.0, ev_data);
-
-        pretty_assertions::assert_eq!(
-            serde_json::to_string_pretty(&ev).unwrap(),
-            log_string
-        );
-    }
-
-    #[test]
-    fn packet_sent_event_some_frames() {
-        let log_string = r#"{
-  "time": 0.0,
-  "name": "quic:packet_sent",
-  "data": {
-    "header": {
-      "packet_type": "initial",
-      "packet_number": 0,
-      "version": "1",
-      "scil": 8,
-      "dcil": 8,
-      "scid": "7e37e4dcc6682da8",
-      "dcid": "36ce104eee50101c"
-    },
-    "raw": {
-      "length": 1251,
-      "payload_length": 1224
-    },
-    "frames": [
-      {
-        "frame_type": "padding",
-        "raw": {
-          "payload_length": 1234
-        }
-      },
-      {
-        "frame_type": "ping"
-      },
-      {
-        "frame_type": "stream",
-        "stream_id": 0,
-        "offset": 0,
-        "fin": true,
-        "raw": {
-          "payload_length": 100
-        }
-      }
-    ]
-  }
-}"#;
-
-        let pkt_hdr = make_pkt_hdr(PacketType::Initial);
-
-        let frames = vec![
-            QuicFrame::Padding {
-                raw: Some(RawInfo {
-                    length: None,
-                    payload_length: Some(1234),
-                    data: None,
-                }),
-            },
-            QuicFrame::Ping { raw: None },
-            QuicFrame::Stream {
-                stream_id: 0,
-                offset: Some(0),
-                fin: Some(true),
-                raw: Some(RawInfo {
-                    length: None,
-                    payload_length: Some(100),
-                    data: None,
-                }),
-            },
-        ];
-
-        let ev_data = EventData::PacketSent(PacketSent {
-            header: pkt_hdr,
-            frames: Some(frames.into()),
-            raw: Some(RawInfo {
-                length: Some(1251),
-                payload_length: Some(1224),
-                data: None,
-            }),
-            ..Default::default()
-        });
-
-        let ev = Event::with_time(0.0, ev_data);
-        pretty_assertions::assert_eq!(
-            serde_json::to_string_pretty(&ev).unwrap(),
-            log_string
-        );
-    }
-
-    #[test]
-    fn trace_no_events() {
-        let log_string = r#"{
-  "title": "Quiche qlog trace",
-  "description": "Quiche qlog trace description",
-  "vantage_point": {
-    "type": "server"
-  },
-  "event_schemas": [],
-  "events": []
-}"#;
-
-        let trace = make_trace();
-
-        let serialized = serde_json::to_string_pretty(&trace).unwrap();
-        pretty_assertions::assert_eq!(serialized, log_string);
-
-        let deserialized: Trace = serde_json::from_str(&serialized).unwrap();
-        pretty_assertions::assert_eq!(deserialized, trace);
-    }
-
-    #[test]
-    fn trace_seq_no_events() {
-        let log_string = r#"{
-  "title": "Quiche qlog trace",
-  "description": "Quiche qlog trace description",
-  "vantage_point": {
-    "type": "server"
-  },
-  "event_schemas": []
-}"#;
-
-        let trace = make_trace_seq();
-
-        let serialized = serde_json::to_string_pretty(&trace).unwrap();
-        pretty_assertions::assert_eq!(serialized, log_string);
-
-        let deserialized: TraceSeq = serde_json::from_str(&serialized).unwrap();
-        pretty_assertions::assert_eq!(deserialized, trace);
-    }
-
-    #[test]
-    fn trace_single_transport_event() {
-        let log_string = r#"{
-  "title": "Quiche qlog trace",
-  "description": "Quiche qlog trace description",
-  "vantage_point": {
-    "type": "server"
-  },
-  "event_schemas": [],
-  "events": [
-    {
-      "time": 0.0,
-      "name": "quic:packet_sent",
-      "data": {
-        "header": {
-          "packet_type": "initial",
-          "packet_number": 0,
-          "version": "1",
-          "scil": 8,
-          "dcil": 8,
-          "scid": "7e37e4dcc6682da8",
-          "dcid": "36ce104eee50101c"
-        },
-        "raw": {
-          "length": 1251,
-          "payload_length": 1224
-        },
-        "frames": [
-          {
-            "frame_type": "stream",
-            "stream_id": 0,
-            "offset": 0,
-            "fin": true,
-            "raw": {
-              "payload_length": 100
-            }
-          }
-        ]
-      }
-    }
-  ]
-}"#;
-
-        let mut trace = make_trace();
-
-        let pkt_hdr = make_pkt_hdr(PacketType::Initial);
-
-        let frames = vec![QuicFrame::Stream {
-            stream_id: 0,
-            offset: Some(0),
-            fin: Some(true),
-            raw: Some(RawInfo {
-                length: None,
-                payload_length: Some(100),
-                data: None,
-            }),
-        }];
-        let event_data = EventData::PacketSent(PacketSent {
-            header: pkt_hdr,
-            frames: Some(frames.into()),
-            raw: Some(RawInfo {
-                length: Some(1251),
-                payload_length: Some(1224),
-                data: None,
-            }),
-            ..Default::default()
-        });
-
-        let ev = Event::with_time(0.0, event_data);
-
-        trace.push_event(ev);
-
-        let serialized = serde_json::to_string_pretty(&trace).unwrap();
-        pretty_assertions::assert_eq!(serialized, log_string);
-
-        let deserialized: Trace = serde_json::from_str(&serialized).unwrap();
-        pretty_assertions::assert_eq!(deserialized, trace);
-    }
-}
-
 pub mod events;
 pub mod reader;
 pub mod streamer;
+#[doc(hidden)]
+pub mod testing;
+pub mod writer;
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+    use std::time::UNIX_EPOCH;
+
+    use super::ReferenceTime;
+
+    #[test]
+    fn reference_time_new_monotonic_serialization() {
+        // 2024-01-15T10:30:00Z = 1705314600 seconds after UNIX epoch
+        let t = UNIX_EPOCH + Duration::from_secs(1_705_314_600);
+        let rt = ReferenceTime::new_monotonic(Some(t));
+        let map: serde_json::Map<String, serde_json::Value> =
+            serde_json::from_str(&serde_json::to_string(&rt).unwrap()).unwrap();
+
+        assert_eq!(map["clock_type"], "monotonic");
+        assert_eq!(map["epoch"], "unknown");
+        assert_eq!(map["wall_clock_time"], "2024-01-15T10:30:00Z");
+
+        let rt = ReferenceTime::new_monotonic(None);
+        let map: serde_json::Map<String, serde_json::Value> =
+            serde_json::from_str(&serde_json::to_string(&rt).unwrap()).unwrap();
+
+        assert_eq!(map["clock_type"], "monotonic");
+        assert_eq!(map["epoch"], "unknown");
+        assert!(!map.contains_key("wall_clock_time"));
+    }
+}

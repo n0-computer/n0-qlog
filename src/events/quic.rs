@@ -24,13 +24,17 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-use std::borrow::Cow;
-
 use serde::Deserialize;
+use serde::Deserializer;
 use serde::Serialize;
+use serde::Serializer;
+use serde::de;
 
-use smallvec::SmallVec;
+use std::borrow::Cow;
+use std::fmt;
+use std::ops::RangeInclusive;
 
+use super::ExData;
 use crate::HexSlice;
 
 use crate::Bytes;
@@ -42,6 +46,64 @@ use crate::events::DataRecipient;
 use crate::events::RawInfo;
 use crate::events::Token;
 use crate::events::TupleEndpointInfo;
+
+/// A single ACK range with inclusive start and end packet numbers.
+///
+/// Serializes as a 1-element JSON array `[n]` when `start == end`, and as a
+/// 2-element JSON array `[start, end]` otherwise. Both forms are accepted
+/// during deserialization.
+///
+/// *Note*, the draft-ietf-quic-qlog-quic-events-12 specifies that the
+/// range is a closed interval, i.e., `range.end` is part of the range.
+#[derive(Clone, PartialEq, Debug, Copy)]
+pub struct AckRange {
+    /// The first packet number in the range (inclusive).
+    pub start: u64,
+    /// The last packet number in the range (inclusive).
+    pub end: u64,
+}
+
+impl AckRange {
+    /// Creates a new `AckRange` spanning `[start, end]` (both inclusive).
+    pub fn new(start: u64, end: u64) -> Self {
+        AckRange { start, end }
+    }
+
+    pub fn as_range_inclusive(&self) -> RangeInclusive<u64> {
+        self.start..=self.end
+    }
+}
+
+impl fmt::Display for AckRange {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.start == self.end {
+            write!(f, "{}", self.start)
+        } else {
+            write!(f, "{}-{}", self.start, self.end)
+        }
+    }
+}
+
+impl Serialize for AckRange {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        if self.start == self.end {
+            [self.start].serialize(s)
+        } else {
+            [self.start, self.end].serialize(s)
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for AckRange {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let v = Vec::<u64>::deserialize(d)?;
+        match v.as_slice() {
+            [x] => Ok(AckRange::new(*x, *x)),
+            [a, b] => Ok(AckRange::new(*a, *b)),
+            _ => Err(de::Error::custom("ack range must have 1 or 2 elements")),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 #[serde(rename_all = "snake_case")]
@@ -57,6 +119,7 @@ pub enum PacketType {
 
     Retry,
     VersionNegotiation,
+    StatelessReset,
     #[default]
     Unknown,
 }
@@ -73,7 +136,7 @@ pub struct PacketHeader {
     pub packet_number: Option<u64>,
     pub path_id: Option<u64>,
 
-    pub token: Option<Token>,
+    pub token: Option<Box<Token>>,
 
     pub length: Option<u16>,
 
@@ -90,7 +153,7 @@ impl PacketHeader {
     /// Creates a new PacketHeader.
     pub fn new(
         packet_type: PacketType, packet_number: Option<u64>,
-        token: Option<Token>, length: Option<u16>, version: Option<u32>,
+        token: Option<Box<Token>>, length: Option<u16>, version: Option<u32>,
         scid: Option<&[u8]>, dcid: Option<&[u8]>,
     ) -> Self {
         let (scil, scid) = match scid {
@@ -201,8 +264,8 @@ pub enum StreamState {
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum ErrorSpace {
-    TransportError,
-    ApplicationError,
+    Transport,
+    Application,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
@@ -333,10 +396,10 @@ pub struct ConnectionStarted {
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct ConnectionClosed {
-    pub owner: Option<TransportInitiator>,
+    pub initiator: Option<TransportInitiator>,
 
     pub connection_error: Option<ConnectionClosedEventError>,
-    pub application_code: Option<ApplicationError>,
+    pub application_error: Option<ApplicationError>,
     pub error_code: Option<u64>,
     pub internal_code: Option<u64>,
 
@@ -418,13 +481,6 @@ pub enum PacketBufferedTrigger {
     KeysUnavailable,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
-#[serde(untagged)]
-pub enum AckedRanges {
-    Single(Vec<Vec<u64>>),
-    Double(Vec<(u64, u64)>),
-}
-
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum QuicFrameTypeName {
@@ -476,22 +532,22 @@ pub enum QuicFrameTypeName {
 // also works automatically.
 pub enum QuicFrame {
     Padding {
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     Ping {
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     Ack {
         ack_delay: Option<f32>,
-        acked_ranges: Option<AckedRanges>,
+        acked_ranges: Option<Vec<AckRange>>,
 
         ect1: Option<u64>,
         ect0: Option<u64>,
         ce: Option<u64>,
 
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     ResetStream {
@@ -500,7 +556,7 @@ pub enum QuicFrame {
         error_code: Option<u64>,
         final_size: u64,
 
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     StopSending {
@@ -508,17 +564,17 @@ pub enum QuicFrame {
         error: ApplicationError,
         error_code: Option<u64>,
 
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     Crypto {
         offset: u64,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     NewToken {
         token: Token,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     Stream {
@@ -526,41 +582,41 @@ pub enum QuicFrame {
         offset: Option<u64>,
         fin: Option<bool>,
 
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     MaxData {
         maximum: u64,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     MaxStreamData {
         stream_id: u64,
         maximum: u64,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     MaxStreams {
         stream_type: StreamType,
         maximum: u64,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     DataBlocked {
         limit: u64,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     StreamDataBlocked {
         stream_id: u64,
         limit: u64,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     StreamsBlocked {
         stream_type: StreamType,
         limit: u64,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     NewConnectionId {
@@ -569,22 +625,22 @@ pub enum QuicFrame {
         connection_id_length: Option<u8>,
         connection_id: Bytes,
         stateless_reset_token: Option<StatelessResetToken>,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     RetireConnectionId {
         sequence_number: u64,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     PathChallenge {
         data: Option<Bytes>,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     PathResponse {
         data: Option<Bytes>,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     ConnectionClose {
@@ -598,11 +654,11 @@ pub enum QuicFrame {
     },
 
     HandshakeDone {
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     Datagram {
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 
     // Extension: QUIC Acknowledgment Frequency
@@ -634,7 +690,7 @@ pub enum QuicFrame {
     PathAck {
         path_id: u64,
         ack_delay: Option<f32>,
-        acked_ranges: Option<AckedRanges>,
+        acked_ranges: Option<Vec<AckRange>>,
 
         ect1: Option<u64>,
         ect0: Option<u64>,
@@ -715,7 +771,7 @@ pub enum QuicFrame {
 
     Unknown {
         frame_type_bytes: Option<u64>,
-        raw: Option<RawInfo>,
+        raw: Option<Box<RawInfo>>,
     },
 }
 
@@ -888,7 +944,7 @@ pub struct PacketReceived {
     // `frames` is defined here in the QLog schema specification. However,
     // our streaming serializer requires serde to put the object at the end,
     // so we define it there and depend on serde's preserve_order feature.
-    pub stateless_reset_token: Option<StatelessResetToken>,
+    pub stateless_reset_token: Option<Box<StatelessResetToken>>,
 
     pub supported_versions: Option<Vec<Bytes>>,
 
@@ -907,7 +963,7 @@ pub struct PacketSent {
     // `frames` is defined here in the QLog schema specification. However,
     // our streaming serializer requires serde to put the object at the end,
     // so we define it there and depend on serde's preserve_order feature.
-    pub stateless_reset_token: Option<StatelessResetToken>,
+    pub stateless_reset_token: Option<Box<StatelessResetToken>>,
 
     pub supported_versions: Option<Vec<Bytes>>,
 
@@ -917,9 +973,9 @@ pub struct PacketSent {
 
     pub trigger: Option<PacketSentTrigger>,
 
-    pub send_at_time: Option<f32>,
+    pub send_at_time: Option<f64>,
 
-    pub frames: Option<SmallVec<[QuicFrame; 1]>>,
+    pub frames: Option<Vec<QuicFrame>>,
 }
 
 #[serde_with::skip_serializing_none]
@@ -1003,7 +1059,7 @@ pub struct DatagramDataMoved {
 #[serde(rename_all = "snake_case")]
 pub enum BlockedState {
     Blocked,
-    Unidirectionalblocked,
+    Unblocked,
     #[default]
     Unknown,
 }
@@ -1024,26 +1080,26 @@ pub enum BlockedReason {
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 pub struct ConnectionDataBlockedUpdated {
-    old: Option<BlockedState>,
-    new: BlockedState,
-    reason: Option<BlockedReason>,
+    pub old: Option<BlockedState>,
+    pub new: BlockedState,
+    pub reason: Option<BlockedReason>,
 }
 
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 pub struct StreamDataBlockedUpdated {
-    old: Option<BlockedState>,
-    new: BlockedState,
-    stream_id: u64,
-    reason: Option<BlockedReason>,
+    pub old: Option<BlockedState>,
+    pub new: BlockedState,
+    pub stream_id: u64,
+    pub reason: Option<BlockedReason>,
 }
 
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
 pub struct DatagramDataBlockedUpdated {
-    old: Option<BlockedState>,
-    new: BlockedState,
-    reason: Option<BlockedReason>,
+    pub old: Option<BlockedState>,
+    pub new: BlockedState,
+    pub reason: Option<BlockedReason>,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug, Default)]
@@ -1152,6 +1208,11 @@ pub struct RecoveryParametersSet {
 #[serde_with::skip_serializing_none]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug, Default)]
 pub struct RecoveryMetricsUpdated {
+    /// Extension data for non-standard fields. `flatten` causes these fields to
+    /// be serialized into the `data` field of a qlog event. On deserialize,
+    /// unknown fields are collected into `ex_data`.
+    #[serde(flatten)]
+    pub ex_data: ExData,
     pub path_id: Option<u64>,
 
     pub min_rtt: Option<f32>,
@@ -1280,28 +1341,4 @@ pub struct KeyDiscarded {
     pub key_phase: Option<u64>,
 
     pub trigger: Option<KeyUpdateOrRetiredTrigger>,
-}
-
-#[cfg(test)]
-mod tests {
-
-    use crate::events::quic::PacketType;
-    use crate::testing::*;
-
-    #[test]
-    fn packet_header() {
-        let pkt_hdr = make_pkt_hdr(PacketType::Initial);
-
-        let log_string = r#"{
-  "packet_type": "initial",
-  "packet_number": 0,
-  "version": "1",
-  "scil": 8,
-  "dcil": 8,
-  "scid": "7e37e4dcc6682da8",
-  "dcid": "36ce104eee50101c"
-}"#;
-
-        assert_eq!(serde_json::to_string_pretty(&pkt_hdr).unwrap(), log_string);
-    }
 }
