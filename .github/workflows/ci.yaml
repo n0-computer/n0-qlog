@@ -34,7 +34,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Setup Environment (PR)
         if: ${{ github.event_name == 'pull_request' }}
@@ -76,7 +76,7 @@ jobs:
     - uses: dtolnay/rust-toolchain@nightly
       with:
         components: rustfmt
-    - uses: mozilla-actions/sccache-action@v0.0.9
+    - uses: mozilla-actions/sccache-action@v0.0.10
     - run: cargo +nightly fmt --all -- --check
 
   check_docs:
@@ -92,7 +92,7 @@ jobs:
       with:
         toolchain: nightly-2026-01-01
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.9
+      uses: mozilla-actions/sccache-action@v0.0.10
 
     - name: Docs
       run: cargo doc --workspace --all-features --no-deps --document-private-items
@@ -111,7 +111,7 @@ jobs:
       with:
         components: clippy
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.9
+      uses: mozilla-actions/sccache-action@v0.0.10
 
     - name: clippy check (all features)
       run: cargo clippy --workspace --all-features --all-targets --bins --tests --benches
@@ -136,7 +136,7 @@ jobs:
       with:
         toolchain: ${{ env.MSRV }}
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.9
+      uses: mozilla-actions/sccache-action@v0.0.10
 
     - name: Check MSRV all features
       run: |
