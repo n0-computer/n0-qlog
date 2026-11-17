@@ -610,8 +610,9 @@ impl ReferenceTime {
     /// If `wall_clock_time` is specified, it will be added as the optional
     /// `wall_clock_time` field of `ReferenceTime`.
     pub fn new_monotonic(wall_clock_time: Option<SystemTime>) -> Self {
-        let wall_clock_time =
-            wall_clock_time.map(|t| humantime::format_rfc3339(t).to_string());
+        let wall_clock_time = wall_clock_time
+            .and_then(|t| jiff::Timestamp::try_from(t).ok())
+            .map(|t| t.to_string());
         ReferenceTime {
             clock_type: "monotonic".to_string(),
             // per draft-ietf-quic-qlog-main-schema-13 epoch must be "unknown"
@@ -703,6 +704,13 @@ mod tests {
         assert_eq!(map["clock_type"], "monotonic");
         assert_eq!(map["epoch"], "unknown");
         assert_eq!(map["wall_clock_time"], "2024-01-15T10:30:00Z");
+
+        // A fraction of a second is written with the digits it needs
+        let rt = ReferenceTime::new_monotonic(Some(t + Duration::from_millis(5)));
+        let map: serde_json::Map<String, serde_json::Value> =
+            serde_json::from_str(&serde_json::to_string(&rt).unwrap()).unwrap();
+
+        assert_eq!(map["wall_clock_time"], "2024-01-15T10:30:00.005Z");
 
         let rt = ReferenceTime::new_monotonic(None);
         let map: serde_json::Map<String, serde_json::Value> =
